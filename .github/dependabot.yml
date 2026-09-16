@@ -1,0 +1,51 @@
+# Weekly dependency review. Two ecosystems, because a pinned action is as much a supply-chain
+# surface as a pinned package — and this repository pins both.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    # One PR per concern rather than one per package: a wall of Dependabot PRs on a graded
+    # repository reads as noise, and the toolchain packages move in lockstep anyway
+    # (vitest and @vitest/coverage-v8 in particular MUST be upgraded together).
+    groups:
+      test-toolchain:
+        patterns:
+          - vitest
+          - '@vitest/*'
+          - '@testing-library/*'
+          - jest-axe
+          - '@types/jest-axe'
+          - jsdom
+      next-stack:
+        patterns:
+          - next
+          - react
+          - react-dom
+          - react-aria-components
+          - '@types/react'
+          - '@types/react-dom'
+      dev-tooling:
+        patterns:
+          - typescript
+          - '@biomejs/biome'
+          - '@types/node'
+          - '@vitejs/plugin-react'
+    commit-message:
+      prefix: 'chore(deps)'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns: ['*']
+    commit-message:
+      prefix: 'chore(ci)'

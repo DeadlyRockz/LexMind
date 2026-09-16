@@ -1,0 +1,39 @@
+{
+  "name": "lexmind",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "LexMind — grounded, citation-verified legal document assistance for tenants.",
+  "packageManager": "pnpm@10.28.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc -p packages/core --noEmit && tsc -p apps/web --noEmit",
+    "lint": "biome ci .",
+    "format": "biome format --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "build": "pnpm --filter @lexmind/web build",
+    "dev": "pnpm --filter @lexmind/web dev",
+    "lexmind": "node --experimental-strip-types packages/core/src/cli.ts",
+    "eval": "node --experimental-strip-types scripts/eval.ts",
+    "bench": "node --experimental-strip-types scripts/bench.ts",
+    "check:size": "bash scripts/check-size.sh",
+    "verify": "pnpm typecheck && pnpm lint && pnpm coverage && pnpm check:size"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.13",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.7",
+    "@types/jest-axe": "3.5.9",
+    "@types/node": "22.20.3",
+    "@vitejs/plugin-react": "6.1.1",
+    "@vitest/coverage-v8": "5.0.1",
+    "jest-axe": "11.0.0",
+    "jsdom": "30.0.1",
+    "typescript": "5.9.3",
+    "vitest": "5.0.1"
+  }
+}

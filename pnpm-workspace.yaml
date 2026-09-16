@@ -1,0 +1,15 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# @napi-rs/canvas is 27 MB of native binaries, an optional dependency of BOTH unpdf and
+# pdfjs-dist, and needed only to *render* a PDF. LexMind extracts text and never renders, so it is
+# excluded by name. A blanket `omit=optional` would also strip rolldown/oxc platform bindings and
+# break the test runner, so the exclusion is targeted rather than global.
+ignoredOptionalDependencies:
+  - '@napi-rs/canvas'
+
+onlyBuiltDependencies:
+  - '@biomejs/biome'
+  - 'esbuild'
+  - 'unrs-resolver'

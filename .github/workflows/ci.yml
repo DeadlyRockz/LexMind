@@ -1,0 +1,85 @@
+# LexMind CI — the harness every phase lands inside.
+#
+# The whole pipeline runs with NO API key and NO network access to any model provider:
+# LEXMIND_OFFLINE=1 makes any attempt to reach a provider a hard failure rather than a silent
+# live call, which is what keeps the suite deterministic and free.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Read-only by default. Nothing in this workflow writes to the repository.
+permissions:
+  contents: read
+
+# A new push to the same ref supersedes the old run rather than queueing behind it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: typecheck · lint · test · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # CI never has a key, and must never behave as if it might.
+      LEXMIND_OFFLINE: '1'
+      # Next's build telemetry is an outbound call we neither need nor want in CI.
+      NEXT_TELEMETRY_DISABLED: '1'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # check-size.sh measures the packed object store, which needs the real history.
+          fetch-depth: 0
+
+      # Ordering is load-bearing: setup-node's `cache: pnpm` shells out to pnpm to locate the
+      # store, so pnpm must already be on PATH. Reversing these two steps fails the cache step.
+      # The version is deliberately omitted — pnpm/action-setup reads `packageManager` from
+      # package.json, so the pinned version lives in exactly one place.
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          # Exactly one cache layer. Enabling `cache: true` on action-setup as well would have
+          # two actions racing for the same store path.
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test with coverage
+        # `reportOnFailure: true` in vitest.config.ts means the coverage table is still emitted
+        # when the gate is red, so a failed threshold is diagnosable from the log alone.
+        run: pnpm vitest run --coverage
+
+      - name: Build
+        run: pnpm build
+
+      - name: Repo size guard
+        # A submission rule, not a nicety: the repository must stay under 10 MB.
+        run: pnpm check:size
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: ignore
+          retention-days: 7

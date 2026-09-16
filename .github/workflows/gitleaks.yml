@@ -1,0 +1,38 @@
+# Secret scanning, on every push and every pull request.
+#
+# LexMind reads exactly one credential (GEMINI_API_KEY, in packages/core/src/model/adapters/
+# gemini.ts) and `.env*` is gitignored — but "we were careful" is not a control. A leaked key in
+# a public submission repository is unrecoverable, so this runs on every commit rather than on a
+# schedule, and it scans full history rather than the diff.
+name: Secret scan
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gitleaks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # Depth 0 so the scan covers history, not just the tip commit.
+          fetch-depth: 0
+
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_LICENSE is required only for organisation-owned repositories.
+          # This repository is a public personal repository, where the action is free.
