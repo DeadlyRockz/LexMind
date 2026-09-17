@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ANSWERABLE_OVERRIDES, CROSSING_RULES } from './advice-boundary.ts';
 import { ALL_CITATIONS, CITATIONS } from './citations.ts';
 import { CLAUSE_TYPES, clauseType, PRIORITY_CLAUSE_TYPES } from './clause-types.ts';
-import { coverageCaveat, resolveJurisdiction } from './jurisdictions/index.ts';
+import { coverageCaveat, isJurisdictionId, resolveJurisdiction } from './jurisdictions/index.ts';
 import { ALL_RISK_PATTERNS, CUE_PATTERNS, NUMERIC_PATTERNS } from './risk-taxonomy.ts';
 import { computeSeverity, isAtLeast, severityScore } from './severity.ts';
 
@@ -210,6 +210,21 @@ describe('jurisdiction resolution', () => {
     expect(res.rules.depositCapMonths).toBeNull();
     expect(res.rules.minEntryNoticeHours).toBeNull();
     expect(res.rules.resources).toHaveLength(0);
+  });
+
+  it('accepts every real jurisdiction id', () => {
+    const ids = ['IN-MTA', 'IN-STATE', 'US-URLTA', 'US-CA', 'US-NY', 'GB-ENG', 'unknown'];
+    for (const id of ids) expect(isJurisdictionId(id)).toBe(true);
+  });
+
+  it('rejects a value outside the known set, rather than let it reach a closed lookup', () => {
+    // This is the exact shape of an untrusted `declaredJurisdiction` from a web form: a
+    // `resolveJurisdiction(text, declared)` call with `declared` outside the seven real ids
+    // dereferences `undefined` two calls later, in rule evaluation, not here — which is why the
+    // check has to happen before `declared` is trusted, not after something downstream breaks.
+    for (const bogus of ['DROP TABLE', '', 'in-mta', 'US-TX', '__proto__']) {
+      expect(isJurisdictionId(bogus)).toBe(false);
+    }
   });
 });
 

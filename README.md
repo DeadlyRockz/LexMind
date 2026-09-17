@@ -104,7 +104,7 @@ Commands — the first one works with no API key and no network access:
 
 ```bash
 pnpm install
-LEXMIND_OFFLINE=1 pnpm test          # full suite, 1015 tests, no key, no network
+LEXMIND_OFFLINE=1 pnpm test          # full suite, 1018 tests, no key, no network
 pnpm lexmind analyse ./lease.pdf     # CLI: full rule-based report, offline
 pnpm dev                             # web UI at localhost:3000 — needs GEMINI_API_KEY for the AI pass
 ```
@@ -154,7 +154,7 @@ development.
 
 ## Quality gates (verified locally, reproducible with the commands shown)
 
-- **Tests:** 1015/1015 passing — `pnpm test`. The core engine's suite runs fully offline
+- **Tests:** 1018/1018 passing — `pnpm test`. The core engine's suite runs fully offline
   (`LEXMIND_OFFLINE=1`, no API key, no network); the web project runs the two live pages through
   `jest-axe` against the WCAG 2.2 AA tag set (`pnpm vitest run --project web`).
 - **Coverage:** 97.6% statements / 91.0% branches / 98.4% functions on `packages/core` —
@@ -167,15 +167,17 @@ development.
   run axe's WCAG 2.2 rule, which a default `.analyze()` never does. Both also carry a skip link,
   `lang="en"`, a single `<h1>`, and a live region for asynchronous status rather than a silent
   state change. Colour contrast is a manual/browser concern outside jsdom's reach and is not yet
-  automated in CI.
+  automated in CI. Full conformance statement, what's automated vs. manually assessed, and the
+  four new WCAG 2.2 AA criteria: [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md).
 - **Security:** no secrets are committed (`.env` and `.env.local` are gitignored and untracked);
   every AI-bound request is redacted before transmission; prompt-injection guards are unit- and
   end-to-end-tested against adversarial cassettes, including a fixed case where an injected
-  "verdict" in document text could otherwise have overridden the real analysis output. The web
-  API route returns a provider's own `userMessage` on model failure, never the raw vendor error
-  text a caught exception carries; it rejects an oversized upload against the same limit
-  `packages/core` enforces before spending a parse attempt on it; and a request the platform
-  cannot read as form data returns a 400, not an unhandled 500.
+  "verdict" in document text could otherwise have overridden the real analysis output. Every value
+  crossing the web API's HTTP boundary into a typed internal value is validated at runtime, not
+  just cast — a jurisdiction id, an upload's size, a malformed request body — and the route
+  returns a provider's sanitised `userMessage` on model failure, never its raw error text. Full
+  threat model, controls, and residual risk stated plainly:
+  [`docs/SECURITY.md`](docs/SECURITY.md).
 
 ## Status
 

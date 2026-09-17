@@ -235,3 +235,17 @@ export const JURISDICTIONS: Readonly<Record<JurisdictionId, JurisdictionRules>> 
 export function jurisdictionRules(id: JurisdictionId): JurisdictionRules {
   return JURISDICTIONS[id];
 }
+
+/**
+ * The runtime check a trust boundary needs before treating a string as a `JurisdictionId`.
+ *
+ * `JurisdictionId` is erased at compile time, so `someString as JurisdictionId` type-checks for
+ * *any* string and is silently trusted everywhere downstream — `JURISDICTIONS[id]` is a closed
+ * `Record`, not a guarded lookup, so an id outside this set resolves to `undefined` and the next
+ * `.someField` access throws. Every caller outside this module reaches a `JurisdictionId` through
+ * code that only ever produces one of these seven values; the one exception is a value declared
+ * by the reader over an untrusted channel (the web form), which is exactly where this belongs.
+ */
+export function isJurisdictionId(value: string): value is JurisdictionId {
+  return Object.hasOwn(JURISDICTIONS, value);
+}

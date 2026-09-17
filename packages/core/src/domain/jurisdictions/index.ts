@@ -2,7 +2,7 @@ import type { JurisdictionId } from '../types.ts';
 import { JURISDICTIONS, type JurisdictionRules } from './rules.ts';
 
 export type { CitedLimit, JurisdictionRules, Resource } from './rules.ts';
-export { JURISDICTIONS, jurisdictionRules } from './rules.ts';
+export { isJurisdictionId, JURISDICTIONS, jurisdictionRules } from './rules.ts';
 
 export type Confidence = 'declared' | 'high' | 'medium' | 'none';
 

@@ -47,4 +47,19 @@ describe('POST /api/analyse', () => {
     const response = await POST(request);
     expect(response.status).toBe(400);
   });
+
+  it('does not crash on a jurisdiction value outside the known set — falls back to auto-detect', async () => {
+    // `jurisdiction` arrives as an untyped form field. Before `isJurisdictionId` guarded it, this
+    // exact value reached `JURISDICTIONS['not-a-real-jurisdiction']` — `undefined` — and crashed
+    // rule evaluation two calls later with a 502, for anyone who sent a value the dropdown never
+    // would.
+    const form = new FormData();
+    form.set('text', 'The tenant shall pay rent monthly and keep the flat clean.');
+    form.set('jurisdiction', 'not-a-real-jurisdiction');
+
+    const response = await postForm(form);
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.result.jurisdiction.id).toBe('unknown');
+  });
 });

@@ -12,8 +12,8 @@ import {
   ingestBytes,
   ingestPastedText,
   isIngestError,
+  isJurisdictionId,
   isModelError,
-  type JurisdictionId,
   LIMITS,
   segment,
   selectModel,
@@ -39,9 +39,14 @@ export async function POST(request: Request): Promise<Response> {
   const file = form.get('file');
   const text = form.get('text');
   const jurisdictionField = form.get('jurisdiction');
+  // `isJurisdictionId` is a real runtime check, not a cast: `JurisdictionId` is erased at compile
+  // time, so an unchecked `as JurisdictionId` would let any client-supplied string reach
+  // `JURISDICTIONS[id]` — a closed lookup that returns `undefined`, not an error, for anything
+  // outside the known set, which then throws deep inside rule evaluation. An unrecognised value
+  // here falls back to auto-detection rather than failing the request.
   const declaredJurisdiction =
-    typeof jurisdictionField === 'string' && jurisdictionField.length > 0
-      ? (jurisdictionField as JurisdictionId)
+    typeof jurisdictionField === 'string' && isJurisdictionId(jurisdictionField)
+      ? jurisdictionField
       : undefined;
 
   let document: Awaited<ReturnType<typeof ingestBytes>>;
