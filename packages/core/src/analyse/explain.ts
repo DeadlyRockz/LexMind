@@ -70,8 +70,21 @@ function advertisedItemShape(schema: z.ZodType): Record<string, unknown> {
   return toGeminiSchema(schema).schema;
 }
 
+/**
+ * Keep the request bounded: the clauses that matter, not all eighty.
+ *
+ * This is also the array's `max()` bound below. Gemini's structured-output decoder builds a state
+ * machine sized off the schema's declared bounds, not the actual payload, so a generous headroom
+ * figure (60) produced "schema produces a constraint that has too many states for serving" even
+ * for a 12-clause lease. Tying the bound to the real per-request cap keeps the state space, and
+ * therefore the request, servable.
+ */
+const MAX_CLAUSES_PER_REQUEST = 24;
+
 export const ClauseExplanationsSchema = z.object({
-  explanations: z.array(z.unknown().meta(advertisedItemShape(ClauseExplanationSchema))).max(60),
+  explanations: z
+    .array(z.unknown().meta(advertisedItemShape(ClauseExplanationSchema)))
+    .max(MAX_CLAUSES_PER_REQUEST),
 });
 
 /** The five parts of the one-page summary. Named, so a missing one is visible rather than absent. */
@@ -157,8 +170,6 @@ export interface SummaryOutcome {
   readonly outcome: CallOutcome;
 }
 
-/** Keep the request bounded: the clauses that matter, not all eighty. */
-const MAX_CLAUSES_PER_REQUEST = 24;
 const CLAUSE_EXCERPT_CHARS = 900;
 
 function clauseLabel(clause: Clause): string {

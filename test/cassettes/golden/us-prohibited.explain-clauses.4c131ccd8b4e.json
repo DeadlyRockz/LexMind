@@ -2,7 +2,7 @@
   "provenance": "SYNTHETIC: hand-authored response written to the plan-06 plain-English target. NOT recorded from Gemini or any other model; no API key was used. Readability measured on it proves the measurement pipeline and a regression floor, not live-model quality.",
   "scenario": "golden",
   "lease": "us-prohibited",
-  "key": "b701bd35f00e6fc9745eafc00eef45688480e08c296d7737b560a34fdd1ae1f3",
+  "key": "4c131ccd8b4e75d0f2168a91305a6fbc414e27e4a7a8395b01c2bc26aea2d048",
   "task": "explain-clauses",
   "tier": "analysis",
   "model": "synthetic-hand-authored",

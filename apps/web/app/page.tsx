@@ -25,20 +25,49 @@ export default function HomePage() {
         prepare for a conversation with someone who can.
       </p>
 
-      <h2>Not built yet</h2>
+      <h2>Run it</h2>
 
+      <ol>
+        <li>
+          Install dependencies: <code>pnpm install</code>
+        </li>
+        <li>
+          Optional — copy <code>.env.example</code> to <code>.env</code> and set{' '}
+          <code>GEMINI_API_KEY</code> for AI-written summaries and explanations. Without a key,
+          LexMind still reports every rule-based finding, fully offline.
+        </li>
+        <li>
+          Start the dev server: <code>pnpm dev</code>, then open <code>http://localhost:3000</code>
+        </li>
+      </ol>
+
+      <h2>Use it</h2>
+
+      <h3>From the command line</h3>
       <p>
-        This page is a placeholder. The engine lives in <code>packages/core</code> and is usable
-        today from the command line:
+        The engine lives in <code>packages/core</code> and is usable today from the terminal:
       </p>
-
       <pre>
         <code>pnpm lexmind analyse ./lease.pdf</code>
       </pre>
+      <p>
+        Add <code>--jurisdiction &lt;id&gt;</code> to declare a jurisdiction instead of inferring
+        it, or <code>--json</code> for machine-readable output. Run <code>pnpm lexmind --help</code>{' '}
+        for the full command reference.
+      </p>
+
+      <h3>From the browser</h3>
+      <p>
+        <a href="/try">Try the engine test page</a> — paste lease text or upload a <code>.txt</code>
+        , <code>.pdf</code>, or <code>.docx</code> file, pick a jurisdiction (or let it
+        auto-detect), and submit to see the same findings the CLI produces, rendered as a list of
+        clauses with their severity, citations, and quoted anchors back into your document. It is a
+        scratch page for exercising the engine, not the finished interface.
+      </p>
 
       <p>
-        Everything the interface will do is reproducible from that command, which is the point:
-        nothing in this product depends on a browser to be correct.
+        Everything the interface does is reproducible from the CLI command above, which is the
+        point: nothing in this product depends on a browser to be correct.
       </p>
     </article>
   );
