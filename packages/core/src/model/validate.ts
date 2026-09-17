@@ -1,5 +1,5 @@
 import type { ZodType } from 'zod';
-import { ModelError, isModelError } from './errors.ts';
+import { isModelError, ModelError } from './errors.ts';
 import { parseWithSchema } from './port.ts';
 
 /**

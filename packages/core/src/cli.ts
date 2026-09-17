@@ -30,6 +30,7 @@ import {
   estimateCostUsd,
   type Finding,
   ingestBytes,
+  isAnalysisGap,
   isIngestError,
   isModelError,
   JURISDICTIONS,
@@ -226,6 +227,15 @@ function formatFinding(finding: Finding): readonly string[] {
   return lines;
 }
 
+/** Display names for the five summary parts. The parts themselves are a closed set in `explain.ts`. */
+const SUMMARY_LABELS: Readonly<Record<string, string>> = {
+  overview: 'Overview',
+  money: 'Money',
+  timing: 'Timing',
+  obligations: 'Obligations',
+  exit: 'Leaving',
+};
+
 function printAnalysis(result: AnalysisResult, sourceKind: string, pageCount: number): void {
   const { stats, jurisdiction } = result;
 
@@ -237,11 +247,17 @@ function printAnalysis(result: AnalysisResult, sourceKind: string, pageCount: nu
 
   if (result.summary !== null) {
     console.log('Summary');
-    console.log(`  ${result.summary.overview}`);
-    console.log(`  Money:       ${result.summary.money}`);
-    console.log(`  Timing:      ${result.summary.timing}`);
-    console.log(`  Obligations: ${result.summary.obligations}`);
-    console.log(`  Leaving:     ${result.summary.exit}`);
+    for (const section of result.summary.sections) {
+      console.log(`  ${SUMMARY_LABELS[section.part] ?? section.part}: ${section.text}`);
+      // Every paragraph earns its place by quoting the document. Printing the anchor is what
+      // makes that checkable by the reader rather than a claim in a design document.
+      console.log(`    ⤷ "${section.anchor.quote}"`);
+    }
+    if (result.summary.missingParts.length > 0) {
+      console.log(
+        `  Not shown: ${result.summary.missingParts.join(', ')} — no paragraph for these could be tied to a quote from the document.`,
+      );
+    }
     console.log('');
   }
 
@@ -266,13 +282,21 @@ function printAnalysis(result: AnalysisResult, sourceKind: string, pageCount: nu
     console.log('');
   }
 
+  const unanalysed = result.clauseStatus.filter((status) => isAnalysisGap(status.state));
+  if (unanalysed.length > 0) {
+    console.log(`Could not analyse ${unanalysed.length} section(s)`);
+    for (const status of unanalysed) console.log(`  - ${status.clauseId}: ${status.detail}`);
+    console.log('');
+  }
+
   console.log(
-    `Stats          escalation ${stats.escalationRate} · untyped ${stats.untypedShare} · ` +
+    `Stats          escalated ${stats.escalatedClauses}/${stats.clauseCount} clauses ` +
+      `(${stats.escalationRate}) · untyped ${stats.untypedShare} · ` +
       `citations rejected ${stats.citationRejectionRate} · ${stats.durationMs} ms`,
   );
   console.log(
-    `Tokens         ${stats.modelCalls} model call(s), ${result.usage.total.totalTokens} tokens, ` +
-      `est. $${estimateCostUsd(result.usage.total).toFixed(6)}`,
+    `Tokens         ${stats.modelCalls} completed model call(s), ${stats.modelFailures} failed, ` +
+      `${result.usage.total.totalTokens} tokens, est. $${estimateCostUsd(result.usage.total).toFixed(6)}`,
   );
   console.log('');
   console.log(AI_DISCLOSURE.notAdvice);

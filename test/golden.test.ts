@@ -3,6 +3,12 @@ import { analyse } from '../packages/core/src/analyse/index.ts';
 import { ingestPastedText } from '../packages/core/src/ingest/index.ts';
 import { segment } from '../packages/core/src/segment/index.ts';
 import {
+  type ClauseTypingEvaluation,
+  evaluateClauseTyping,
+  formatMisses,
+} from './eval/clause-typing.ts';
+import { formatTypingTable } from './eval/scoring.ts';
+import {
   CLEAN_FAIR_LEASE,
   GOLDEN_LEASES,
   INDIAN_ELEVEN_MONTH_LEASE,
@@ -74,12 +80,65 @@ describe('the golden set', () => {
       it('produces identical output on two consecutive runs', async () => {
         const first = await run(lease.text);
         const second = await run(lease.text);
-        expect(JSON.stringify(second.result.findings)).toBe(
-          JSON.stringify(first.result.findings),
-        );
+        expect(JSON.stringify(second.result.findings)).toBe(JSON.stringify(first.result.findings));
       });
     });
   }
+});
+
+describe('clause typing: precision and recall per type on the golden set', () => {
+  // Floors, not targets. The labels in `fixtures/leases.ts` were written from the clause text and
+  // the taxonomy's definitions, never from detector output, so a drop below these is a detector
+  // regression to fix — not a label to loosen.
+  const MIN_MICRO_PRECISION = 0.9;
+  const MIN_MICRO_RECALL = 0.9;
+
+  // Evaluated on first use rather than at collection, so a drifted label fails these tests with its
+  // own message instead of taking every other golden test in this file down with it.
+  let cached: { evaluation: ClauseTypingEvaluation; report: string } | undefined;
+  const evaluate = () => {
+    if (cached === undefined) {
+      const evaluation = evaluateClauseTyping(GOLDEN_LEASES);
+      const misses = formatMisses(evaluation.misses) || '(none)';
+      const report = `${formatTypingTable(evaluation.score)}\n\nMisses and false positives:\n${misses}`;
+      cached = { evaluation, report };
+    }
+    return cached;
+  };
+
+  it('labels every clause the segmenter produces, in every golden lease', () => {
+    const { evaluation } = evaluate();
+    const labelled = GOLDEN_LEASES.reduce((total, lease) => total + lease.clauseTypes.length, 0);
+    expect(evaluation.score.clauses).toBe(labelled);
+    expect(evaluation.score.clauses).toBeGreaterThan(50);
+  });
+
+  it(`reaches micro precision >= ${MIN_MICRO_PRECISION}`, () => {
+    const { evaluation, report } = evaluate();
+    // Printed so the per-type table is visible in CI logs; Phase 11 renders the same table into
+    // reports/scorecard.md.
+    console.info(`Clause typing on the golden set (deterministic, no model):\n${report}`);
+    expect(evaluation.score.micro.precision ?? 0, report).toBeGreaterThanOrEqual(
+      MIN_MICRO_PRECISION,
+    );
+  });
+
+  it(`reaches micro recall >= ${MIN_MICRO_RECALL}`, () => {
+    const { evaluation, report } = evaluate();
+    expect(evaluation.score.micro.recall ?? 0, report).toBeGreaterThanOrEqual(MIN_MICRO_RECALL);
+  });
+
+  it('finds at least one instance of every type the golden set labels', () => {
+    const { evaluation, report } = evaluate();
+    const neverFound = evaluation.score.perType
+      .filter((type) => type.labelled > 0 && type.tp === 0)
+      .map((type) => type.typeId);
+    expect(neverFound, report).toEqual([]);
+  });
+
+  it('is deterministic: two runs score identically', () => {
+    expect(evaluateClauseTyping(GOLDEN_LEASES)).toEqual(evaluate().evaluation);
+  });
 });
 
 describe('calibration: the clean fair lease', () => {
@@ -87,9 +146,7 @@ describe('calibration: the clean fair lease', () => {
     // The most valuable fixture in the set. A tool that flags everything teaches nothing, so this
     // is the assertion that proves LexMind is calibrated rather than merely sensitive.
     const { result } = await run(CLEAN_FAIR_LEASE);
-    const loud = result.findings.filter(
-      (f) => f.severity === 'critical' || f.severity === 'high',
-    );
+    const loud = result.findings.filter((f) => f.severity === 'critical' || f.severity === 'high');
     expect(
       loud.map((f) => `${f.patternId} (${f.severity})`),
       'a balanced tenancy must not be shouted at',
@@ -200,7 +257,9 @@ describe("England's abolished regime", () => {
 
     const finding = result.findings.find((f) => f.patternId === 'ast-section-21-mischaracterised');
     expect(finding).toBeDefined();
-    expect(finding?.citations.map((c) => c.authority).join(' ')).toMatch(/Renters' Rights Act 2025/);
+    expect(finding?.citations.map((c) => c.authority).join(' ')).toMatch(
+      /Renters' Rights Act 2025/,
+    );
     expect(finding?.whyItMatters).toMatch(/no longer exists/);
   });
 });

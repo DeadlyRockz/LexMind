@@ -1,0 +1,10 @@
+{
+  "provenance": "SYNTHETIC: hand-authored response written to the plan-06 plain-English target. NOT recorded from Gemini or any other model; no API key was used. Readability measured on it proves the measurement pipeline and a regression floor, not live-model quality.",
+  "scenario": "golden",
+  "lease": "england-outdated",
+  "key": "62d73f994779af48593fb8bbaf08067169821b009d37603ec5c1502753225185",
+  "task": "explain-clauses",
+  "tier": "analysis",
+  "model": "synthetic-hand-authored",
+  "response": "{\"explanations\":[{\"clauseId\":\"c1\",\"plainEnglish\":\"This part names the kind of tenancy. The document calls it an assured shorthold tenancy under the Housing Act 1988, for a home in England and Wales.\",\"quote\":\"This assured shorthold tenancy is granted under the Housing Act 1988\",\"unusual\":false},{\"clauseId\":\"c3\",\"plainEnglish\":\"You pay a deposit of £2,800, which is two months of rent. It is held in a deposit scheme. You also pay a fee of £300 that is not paid back.\",\"quote\":\"An administration fee of £300 is payable and is non-refundable.\",\"unusual\":true},{\"clauseId\":\"c4\",\"plainEnglish\":\"You must pay for all repairs to the main structure and the outside of the building.\",\"quote\":\"The tenant shall be responsible for all repairs to the structure and exterior of the premises.\",\"unusual\":true},{\"clauseId\":\"c5\",\"plainEnglish\":\"After the fixed term, the landlord says they can take the home back by serving a section 21 notice. They do not have to give a reason.\",\"quote\":\"The landlord may recover possession by serving a section 21 notice at any time after the fixed\",\"unusual\":false},{\"clauseId\":\"c7\",\"plainEnglish\":\"Any dispute must go to private arbitration, not to a court.\",\"quote\":\"All disputes shall be referred exclusively to binding arbitration.\",\"unusual\":true},{\"clauseId\":\"c6\",\"plainEnglish\":\"If rent is late, you pay interest at 12 per cent a year. It starts on the day the rent is due.\",\"quote\":\"Interest at 12 per cent per annum shall be charged on rent from the day it falls due.\",\"unusual\":false}]}"
+}

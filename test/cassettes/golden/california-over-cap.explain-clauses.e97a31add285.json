@@ -1,0 +1,10 @@
+{
+  "provenance": "SYNTHETIC: hand-authored response written to the plan-06 plain-English target. NOT recorded from Gemini or any other model; no API key was used. Readability measured on it proves the measurement pipeline and a regression floor, not live-model quality.",
+  "scenario": "golden",
+  "lease": "california-over-cap",
+  "key": "e97a31add285f54c6d61833229d66606ae19eaf964159b35f8c9e40c0add767e",
+  "task": "explain-clauses",
+  "tier": "analysis",
+  "model": "synthetic-hand-authored",
+  "response": "{\"explanations\":[{\"clauseId\":\"c3\",\"plainEnglish\":\"You pay a deposit of $7,200. That is three months of rent. The lease says $500 of it will not be paid back.\",\"quote\":\"A portion of the deposit in the amount of $500 is non-refundable and shall not be refunded.\",\"unusual\":true},{\"clauseId\":\"c5\",\"plainEnglish\":\"Either side can end the lease with thirty days of written notice.\",\"quote\":\"Either party may terminate on thirty days written notice.\",\"unusual\":false},{\"clauseId\":\"c6\",\"plainEnglish\":\"The landlord must give you 24 hours of written notice before coming in. In an emergency, no notice is needed.\",\"quote\":\"Landlord shall give twenty-four hours written notice before entering\",\"unusual\":false}]}"
+}

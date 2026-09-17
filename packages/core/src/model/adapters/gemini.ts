@@ -39,7 +39,7 @@
  */
 import { GoogleGenAI } from '@google/genai';
 import { assertWithinPromptBudget, readBudgetConfig } from '../budget.ts';
-import { ModelError, classifyApiError } from '../errors.ts';
+import { classifyApiError, ModelError } from '../errors.ts';
 import {
   assemblePrompt,
   type JsonRequest,
@@ -193,10 +193,14 @@ export function createGeminiAdapter(options: GeminiOptions = {}): LlmPort {
       const first = await call(model, prompt, config);
       const firstText = readText(first);
 
-      const { value, repaired } = await parseWithRepair(request.schema, firstText, async (error) => {
-        const retryPrompt = `${prompt}\n\n${repairInstruction(error)}`;
-        return readText(await call(model, retryPrompt, config));
-      });
+      const { value, repaired } = await parseWithRepair(
+        request.schema,
+        firstText,
+        async (error) => {
+          const retryPrompt = `${prompt}\n\n${repairInstruction(error)}`;
+          return readText(await call(model, retryPrompt, config));
+        },
+      );
 
       return { value, usage: readUsage(first), repaired, model };
     },

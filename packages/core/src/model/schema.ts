@@ -1,4 +1,4 @@
-import { type ZodType, toJSONSchema } from 'zod';
+import { toJSONSchema, type ZodType } from 'zod';
 
 /**
  * Zod to Gemini-safe JSON Schema.
@@ -82,7 +82,7 @@ export function assertGeminiSafeSchema(schema: unknown, path = '$'): void {
   if (schema === null || typeof schema !== 'object') return;
 
   if (Array.isArray(schema)) {
-    schema.forEach((entry, i) => assertGeminiSafeSchema(entry, `${path}[${i}]`));
+    for (const [i, entry] of schema.entries()) assertGeminiSafeSchema(entry, `${path}[${i}]`);
     return;
   }
 
@@ -107,7 +107,9 @@ export function assertGeminiSafeSchema(schema: unknown, path = '$'): void {
 }
 
 function sanitise(node: unknown, path: string, stripped: string[]): unknown {
-  if (Array.isArray(node)) return node.map((entry, i) => sanitise(entry, `${path}[${i}]`, stripped));
+  if (Array.isArray(node)) {
+    return node.map((entry, i) => sanitise(entry, `${path}[${i}]`, stripped));
+  }
   if (node === null || typeof node !== 'object') return node;
 
   const out: Record<string, unknown> = {};

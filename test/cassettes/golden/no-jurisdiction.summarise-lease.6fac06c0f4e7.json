@@ -1,0 +1,10 @@
+{
+  "provenance": "SYNTHETIC: hand-authored response written to the plan-06 plain-English target. NOT recorded from Gemini or any other model; no API key was used. Readability measured on it proves the measurement pipeline and a regression floor, not live-model quality.",
+  "scenario": "golden",
+  "lease": "no-jurisdiction",
+  "key": "6fac06c0f4e7ffd8d44d4a769dacb25caa4487b4c332a5996af3842865fdcb68",
+  "task": "summarise-lease",
+  "tier": "analysis",
+  "model": "synthetic-hand-authored",
+  "response": "{\"sections\":[{\"part\":\"overview\",\"text\":\"This is a tenancy that runs for twelve months. It does not name a place or a law.\",\"quote\":\"The tenancy runs for twelve months.\"},{\"part\":\"money\",\"text\":\"You pay rent of 1,000 each month. The document does not mention a deposit.\",\"quote\":\"The tenant shall pay rent of 1,000 each month.\"},{\"part\":\"timing\",\"text\":\"You must give thirty days of written notice. The landlord needs to give only two days of notice.\",\"quote\":\"The tenant shall give thirty days written notice to end this tenancy.\"},{\"part\":\"obligations\",\"text\":\"You pay for all repairs, even to the main structure. The landlord may come in at any time without notice.\",\"quote\":\"The tenant is responsible for all repairs, including structural repairs.\"},{\"part\":\"exit\",\"text\":\"You can end the tenancy with thirty days of written notice. The landlord can end it with two days of notice.\",\"quote\":\"tenancy by giving two days notice.\"}]}"
+}

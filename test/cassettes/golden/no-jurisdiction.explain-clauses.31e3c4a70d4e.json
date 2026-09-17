@@ -1,0 +1,10 @@
+{
+  "provenance": "SYNTHETIC: hand-authored response written to the plan-06 plain-English target. NOT recorded from Gemini or any other model; no API key was used. Readability measured on it proves the measurement pipeline and a regression floor, not live-model quality.",
+  "scenario": "golden",
+  "lease": "no-jurisdiction",
+  "key": "31e3c4a70d4ef5dc8c90a3161bf4d925c26b0f77c3e71f3ed1c08b8a25e70b6a",
+  "task": "explain-clauses",
+  "tier": "analysis",
+  "model": "synthetic-hand-authored",
+  "response": "{\"explanations\":[{\"clauseId\":\"c4\",\"plainEnglish\":\"You must give thirty days of written notice to end the tenancy. The landlord can end it with just two days of notice.\",\"quote\":\"The tenant shall give thirty days written notice to end this tenancy.\",\"unusual\":true},{\"clauseId\":\"c5\",\"plainEnglish\":\"The landlord can come into the home at any time without telling you first.\",\"quote\":\"The landlord may enter the premises at any time without notice.\",\"unusual\":true},{\"clauseId\":\"c6\",\"plainEnglish\":\"You must pay for all repairs. This includes repairs to the main structure of the building.\",\"quote\":\"The tenant is responsible for all repairs, including structural repairs.\",\"unusual\":true}]}"
+}

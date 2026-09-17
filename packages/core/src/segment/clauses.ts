@@ -31,6 +31,25 @@ function isClauseStart(item: PositionedItem): boolean {
   return looksLikeHeading(item.text);
 }
 
+/**
+ * Enter the heading scope of an item that opens a new clause, returning the trail it sits under.
+ *
+ * Headings at or below the item's own level are closed first, so the trail holds only its
+ * ancestors. A heading item is then pushed, so the clauses beneath it inherit it — which is how
+ * "Section 8.3" keeps "ARTICLE 8 - SECURITY DEPOSIT" as context.
+ */
+function enterHeadingScope(stack: HeadingFrame[], item: PositionedItem): readonly string[] {
+  const level = item.headingLevel;
+  if (level !== undefined) {
+    while (stack.length > 0 && (stack[stack.length - 1]?.level ?? 0) >= level) {
+      stack.pop();
+    }
+  }
+  const trail = stack.map((frame) => frame.text);
+  if (level !== undefined) stack.push({ level, text: item.text });
+  return trail;
+}
+
 /** Depth from the heading stack and the numbering scheme together. */
 function levelFor(item: PositionedItem, trailDepth: number): number {
   if (item.headingLevel !== undefined) return item.headingLevel;
@@ -98,19 +117,9 @@ export function segmentClauses(document: NormalizedDocument): readonly Clause[] 
 
     if (isClauseStart(item) && group.length > 0) flush();
 
-    if (group.length === 0) {
-      // Maintain the heading stack so "Section 8.3" inherits "ARTICLE 8 - SECURITY DEPOSIT".
-      // A flat clause list loses that context, and answer quality drops with it.
-      if (item.headingLevel !== undefined) {
-        while (stack.length > 0 && (stack[stack.length - 1]?.level ?? 0) >= item.headingLevel) {
-          stack.pop();
-        }
-      }
-      groupTrail = stack.map((frame) => frame.text);
-      if (item.headingLevel !== undefined) {
-        stack.push({ level: item.headingLevel, text: item.text });
-      }
-    }
+    // Maintain the heading stack as each clause opens. A flat clause list loses the context of the
+    // headings above it, and answer quality drops with it.
+    if (group.length === 0) groupTrail = enterHeadingScope(stack, item);
 
     group.push(item);
   }

@@ -1,4 +1,4 @@
-import { ModelError, isModelError } from './errors.ts';
+import { isModelError, ModelError } from './errors.ts';
 
 /**
  * Exponential backoff with jitter.

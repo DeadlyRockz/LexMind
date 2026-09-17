@@ -22,7 +22,9 @@ export interface BudgetConfig {
   readonly maxOutputTokens: number;
 }
 
-export function readBudgetConfig(env: Record<string, string | undefined> = process.env): BudgetConfig {
+export function readBudgetConfig(
+  env: Record<string, string | undefined> = process.env,
+): BudgetConfig {
   return {
     maxPromptTokens: readInt(env['LEXMIND_MAX_PROMPT_TOKENS'], 120_000),
     maxOutputTokens: readInt(env['LEXMIND_MAX_OUTPUT_TOKENS'], 4096),
@@ -63,12 +65,30 @@ export function assertWithinPromptBudget(prompt: string, config: BudgetConfig): 
   return estimated;
 }
 
-/** Running usage across a whole analysis, for the CLI output and `reports/perf.md`. */
+/**
+ * Running usage across a whole analysis, for the CLI output and `reports/perf.md`.
+ *
+ * `calls` counts **model calls that actually completed** — a request that left the process and
+ * came back with a response. It is deliberately not "attempts": a swallowed failure with no key
+ * configured spends no tokens, reaches no provider, and must not be reported as a call. A meter
+ * reading `calls: 2` next to `modelLabel: "unavailable (no API key)"` and zero tokens is a metric
+ * that contradicts itself, and rule 9 of this project is that nothing is claimed that the
+ * scorecard cannot evidence. Attempts that failed are reported separately, by the caller.
+ */
 export interface UsageMeter {
   readonly total: Usage;
   readonly byTask: ReadonlyMap<string, Usage>;
   readonly calls: number;
 }
+
+/**
+ * What became of one model call, stated at the call site rather than inferred.
+ *
+ * `failed` and `skipped` both mean "no completed call", and are distinguished only so the caller
+ * can say which happened. Neither adds to the meter: a failure spends nothing we can evidence,
+ * and a skip never started.
+ */
+export type CallOutcome = 'completed' | 'failed' | 'skipped';
 
 export const EMPTY_METER: UsageMeter = {
   total: { promptTokens: 0, outputTokens: 0, thoughtTokens: 0, cachedTokens: 0, totalTokens: 0 },
@@ -86,7 +106,21 @@ export function addUsage(a: Usage, b: Usage): Usage {
   };
 }
 
-export function recordUsage(meter: UsageMeter, task: string, usage: Usage): UsageMeter {
+/**
+ * Record one model call.
+ *
+ * The `outcome` is required information that only the call site has, so it is passed rather than
+ * guessed. Anything but `completed` returns the meter untouched — no call, no tokens, no entry in
+ * the per-task breakdown. The default keeps the common case ("this call returned") at three
+ * arguments.
+ */
+export function recordUsage(
+  meter: UsageMeter,
+  task: string,
+  usage: Usage,
+  outcome: CallOutcome = 'completed',
+): UsageMeter {
+  if (outcome !== 'completed') return meter;
   const byTask = new Map(meter.byTask);
   byTask.set(task, addUsage(byTask.get(task) ?? EMPTY_METER.total, usage));
   return { total: addUsage(meter.total, usage), byTask, calls: meter.calls + 1 };

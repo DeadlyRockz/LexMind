@@ -5,6 +5,7 @@ import {
   groupIntoBlocks,
   type LayoutItem,
   layoutPages,
+  removeRepeatedFurniture,
 } from './layout.ts';
 
 /** A text run at a position. PDF space, so y counts up from the bottom of the page. */
@@ -214,3 +215,71 @@ describe('layoutPages', () => {
 function assembleLinesInput(lines: readonly string[]): LayoutItem[] {
   return lines.map((text, i) => item(text, 72, 740 - i * 40));
 }
+
+describe('layout on degenerate geometry', () => {
+  it('does not split a page whose items have no horizontal extent', () => {
+    const items = Array.from({ length: 10 }, (_, i) =>
+      item(`line ${i}`, 72, 700 - i * 20, { width: 0 }),
+    );
+    expect(detectColumns(items)).toEqual([items]);
+  });
+
+  it('does not treat a lone item across a gutter as a column', () => {
+    const items: LayoutItem[] = [];
+    for (let i = 0; i < 12; i += 1) items.push(item('body text', 60, 700 - i * 20, { width: 180 }));
+    items.push(item('initials', 400, 400, { width: 100 }));
+    expect(detectColumns(items)).toHaveLength(1);
+  });
+
+  it('splits a single-row page with a clear gutter, since there is no height to measure', () => {
+    const items: LayoutItem[] = [];
+    for (let i = 0; i < 5; i += 1) {
+      items.push(item(`L${i}`, 40 + i * 30, 700, { width: 25 }));
+      items.push(item(`R${i}`, 400 + i * 30, 700, { width: 25 }));
+    }
+    const columns = detectColumns(items);
+    expect(columns).toHaveLength(2);
+    expect(columns[0]?.map((i) => i.str)).toEqual(['L0', 'L1', 'L2', 'L3', 'L4']);
+  });
+
+  it('assumes a nominal font size when the PDF reports none, so baselines still group', () => {
+    const lines = assembleLines([
+      item('Security', 72, 700, { fontSize: 0, width: 40 }),
+      item('deposit', 130, 703, { fontSize: 0, width: 40 }),
+      item('Refundable', 72, 680, { fontSize: 0, width: 50 }),
+    ]);
+    expect(lines.map((l) => l.text)).toEqual(['Security deposit', 'Refundable']);
+    expect(groupIntoBlocks(lines, 1).map((b) => b.text)).toEqual(['Security deposit Refundable']);
+  });
+});
+
+describe('removeRepeatedFurniture', () => {
+  const line = (text: string) => ({ text, x: 72, y: 700, fontSize: 11 });
+
+  it('removes nothing when no edge line repeats, and survives a blank page', () => {
+    const pages = [[line('Clause one.')], [], [line('Clause two.')], [line('Clause three.')]];
+    const result = removeRepeatedFurniture(pages);
+    expect(result.removed).toEqual([]);
+    expect(result.pages).toBe(pages);
+  });
+
+  it('never counts an edge line with no text as furniture', () => {
+    const pages = [
+      [line(' '), line('Clause one.')],
+      [line(' '), line('Clause two.')],
+      [line(' '), line('Clause three.')],
+    ];
+    expect(removeRepeatedFurniture(pages).removed).toEqual([]);
+  });
+
+  it('warns in the singular when one repeating line was dropped', () => {
+    const pages = Array.from({ length: 3 }, (_, p) =>
+      assembleLinesInput([`Clause ${'ABC'[p]}: the tenant shall pay rent.`, `Page ${p + 1} of 3`]),
+    );
+    const result = layoutPages(pages);
+    expect(result.warnings).toEqual([
+      'Removed 1 repeating page header or footer line so they are not read as clauses.',
+    ]);
+    expect(result.blocks.map((b) => b.text).join(' ')).not.toMatch(/Page \d of 3/);
+  });
+});

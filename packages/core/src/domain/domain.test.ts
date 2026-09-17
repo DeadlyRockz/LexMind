@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ANSWERABLE_OVERRIDES, CROSSING_RULES } from './advice-boundary.ts';
 import { ALL_CITATIONS, CITATIONS } from './citations.ts';
-import { CLAUSE_TYPES, PRIORITY_CLAUSE_TYPES, clauseType } from './clause-types.ts';
+import { CLAUSE_TYPES, clauseType, PRIORITY_CLAUSE_TYPES } from './clause-types.ts';
 import { coverageCaveat, resolveJurisdiction } from './jurisdictions/index.ts';
 import { ALL_RISK_PATTERNS, CUE_PATTERNS, NUMERIC_PATTERNS } from './risk-taxonomy.ts';
 import { computeSeverity, isAtLeast, severityScore } from './severity.ts';
@@ -84,7 +84,8 @@ describe('risk taxonomy', () => {
   });
 
   it('states what a clause does, never what the reader should do', () => {
-    const advice = /\byou should\b|\bwe recommend\b|\bdemand that\b|\brefuse to\b|\byou must (?:not )?sign\b/i;
+    const advice =
+      /\byou should\b|\bwe recommend\b|\bdemand that\b|\brefuse to\b|\byou must (?:not )?sign\b/i;
     for (const p of ALL_RISK_PATTERNS) {
       expect(p.title, `${p.id} title gives advice`).not.toMatch(advice);
       expect(p.whyItMatters, `${p.id} rationale gives advice`).not.toMatch(advice);

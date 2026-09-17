@@ -11,8 +11,8 @@ import { OBSCURE_GRADE_LEVEL, readability } from '../util/readability.ts';
 import { countWords, splitSentences } from '../util/text.ts';
 import type { ClauseTyping } from './detect.ts';
 import { clausesOfType } from './detect.ts';
-import type { ExtractedFacts } from './facts.ts';
-import { sentenceContaining } from './facts.ts';
+import type { ExtractedFacts, FactKey } from './facts.ts';
+import { conflictNoteFor, MAX_CREDIBLE_DEPOSIT_MONTHS } from './facts.ts';
 
 /**
  * The rule engine.
@@ -106,25 +106,118 @@ function candidate(
 
 // ─── Cue rules ─────────────────────────────────────────────────────────────────────────────────
 
+const CUE_REGEX_CACHE = new Map<string, RegExp>();
+const CUE_REGEX_ALL_CACHE = new Map<string, RegExp>();
+
 /**
- * Match a cue pattern against a clause: every group must contribute at least one phrase.
+ * A cue phrase, matched on a word boundary at its **start** only.
+ *
+ * Only the start, because half the cue vocabulary is a deliberate stem: `terminat` covers
+ * terminate, terminates, termination and terminated in one row, and anchoring the end would break
+ * every row that relies on it. The leading boundary is the half that was missing and the half that
+ * matters — a bare `indexOf` finds `rent` inside "cur**rent** market value", `fail` inside
+ * "un**fail**ingly", `bond` inside "abs**cond**" and `on` inside almost everything, and each of
+ * those is a finding shown to a tenant about a clause that does not say what the finding claims.
+ */
+function cueRegex(phrase: string): RegExp {
+  const cached = CUE_REGEX_CACHE.get(phrase);
+  if (cached !== undefined) return cached;
+
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const lead = /^[\p{L}\p{N}]/u.test(phrase) ? '(?<![\\p{L}\\p{N}])' : '';
+  const built = new RegExp(`${lead}${escaped}`, 'iu');
+  CUE_REGEX_CACHE.set(phrase, built);
+  return built;
+}
+
+/** The same matcher, global, for walking every occurrence. Compiled once and reused. */
+function cueRegexAll(phrase: string): RegExp {
+  const cached = CUE_REGEX_ALL_CACHE.get(phrase);
+  if (cached !== undefined) return cached;
+  const built = new RegExp(cueRegex(phrase).source, 'giu');
+  CUE_REGEX_ALL_CACHE.set(phrase, built);
+  return built;
+}
+
+function firstCueHit(text: string, phrases: readonly string[]): string | null {
+  for (const phrase of phrases) {
+    if (cueRegex(phrase).test(text)) return phrase;
+  }
+  return null;
+}
+
+/** Words that turn a phrase into its own opposite when they sit just before it. */
+const NEGATED_BEFORE = /\b(?:no|not|without|never|neither|nor)\s+(?:\w+\s+){0,2}$/i;
+
+/**
+ * An exclusion phrase that is actually present — not one appearing inside its own negation.
+ *
+ * `no-cure-period` lists `no opportunity to` as a cue and `opportunity to cure` as an exclusion.
+ * Those match the same characters, and the exclusion wins, so the rule named after the phrase "no
+ * cure period" was switched off by that phrase appearing in a lease. Three of its four canonical
+ * true positives were dropped in silence. A stated chance to put a breach right still answers the
+ * check; a *denial* of one never did.
+ */
+function isExcluded(clauseText: string, pattern: RiskPattern): boolean {
+  for (const phrase of pattern.exclude ?? []) {
+    for (const match of clauseText.matchAll(cueRegexAll(phrase))) {
+      if (!NEGATED_BEFORE.test(clauseText.slice(0, match.index ?? 0))) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Match a cue pattern against a clause: every group must contribute at least one phrase, **within
+ * one sentence**.
  *
  * AND-of-ORs rather than a single regex, because that is what makes a new drafting variant a data
- * change. It is also what keeps precision up: requiring both "indemnify" and a party word is far
- * more selective than either alone.
+ * change. The sentence is what makes it mean anything. Conjoining the groups across a whole clause
+ * lets unrelated sentences satisfy different halves of a pattern, so *generalising* a row into more
+ * and looser groups lowers its precision instead of raising its recall — and the failures are not
+ * subtle ones:
+ *
+ *  - "Rent is payable immediately on the first of each month. Failure to pay is a breach. Either
+ *    party may terminate on ninety days notice." fired `no-cure-period` on the word *immediately*,
+ *    in a clause that grants ninety days.
+ *  - "The Tenant may terminate this Agreement on thirty days notice at any time without penalty."
+ *    fired `unilateral-termination-landlord` — reported as *the landlord can end the tenancy at
+ *    will* — on a clause that gives the tenant a right the landlord does not have.
+ *  - "In any dispute the Landlord shall pay the reasonable legal costs of the Tenant." fired
+ *    `landlord-attorney-fees`, reported as *the tenant pays the landlord legal costs*, on the one
+ *    drafting a tenant would be pleased to find.
+ *
+ * A finding that inverts what a clause says is worse than no finding, and it arrives with the same
+ * confidence as a true one.
  */
-export function matchesCues(clauseText: string, pattern: RiskPattern): string | null {
-  const lower = clauseText.toLowerCase();
+function cueMatchIn(
+  clauseText: string,
+  pattern: RiskPattern,
+): { readonly evidence: string; readonly sentence: string } | null {
+  if (pattern.cues.length === 0) return null;
+  if (isExcluded(clauseText, pattern)) return null;
 
-  if (pattern.exclude?.some((phrase) => lower.includes(phrase.toLowerCase())) === true) return null;
+  for (const sentence of splitSentences(clauseText)) {
+    let evidence = '';
+    let complete = true;
 
-  let evidence = '';
-  for (const group of pattern.cues) {
-    const hit = group.find((phrase) => lower.includes(phrase.toLowerCase()));
-    if (hit === undefined) return null;
-    if (hit.length > evidence.length) evidence = hit;
+    for (const group of pattern.cues) {
+      const hit = firstCueHit(sentence, group);
+      if (hit === null) {
+        complete = false;
+        break;
+      }
+      if (hit.length > evidence.length) evidence = hit;
+    }
+
+    if (complete) return { evidence, sentence };
   }
-  return pattern.cues.length === 0 ? null : evidence;
+
+  return null;
+}
+
+export function matchesCues(clauseText: string, pattern: RiskPattern): string | null {
+  return cueMatchIn(clauseText, pattern)?.evidence ?? null;
 }
 
 export function applyCueRules(input: RuleInput): readonly Candidate[] {
@@ -132,19 +225,19 @@ export function applyCueRules(input: RuleInput): readonly Candidate[] {
 
   for (const clause of input.clauses) {
     for (const pattern of CUE_PATTERNS) {
-      const evidence = matchesCues(clause.text, pattern);
-      if (evidence === null) continue;
+      const match = cueMatchIn(clause.text, pattern);
+      if (match === null) continue;
 
-      // Quote the sentence that carries the cue, not the whole clause: a short quote is easier to
-      // verify, easier to read, and easier to check against the document by eye.
-      const index = clause.text.toLowerCase().indexOf(evidence);
-      const fragment = index === -1 ? '' : clause.text.slice(index, index + evidence.length);
-      const quote = sentenceContaining(clause.text, fragment);
+      // Quote the sentence that carries the cues, not the whole clause: a short quote is easier to
+      // verify, easier to read, and easier to check against the document by eye. It is also the
+      // sentence in which the pattern was actually satisfied, so the quote and the finding agree.
+      const at = match.sentence.search(cueRegex(match.evidence));
+      const fragment = at === -1 ? '' : match.sentence.slice(at, at + match.evidence.length);
 
       const entry = candidate(
         pattern.id,
         clause,
-        quote,
+        match.sentence,
         `The clause says "${fragment}".`,
         input.jurisdiction,
       );
@@ -160,12 +253,32 @@ export function applyCueRules(input: RuleInput): readonly Candidate[] {
 /** A week of rent, in months. England states its deposit cap in weeks. */
 const WEEKS_PER_MONTH = 4.345;
 
+/**
+ * Add the document's own disagreement about a number to a finding computed from it.
+ *
+ * A reader is entitled to know that the figure behind an arithmetic finding is one of two the
+ * document states, and which one was used. Silence here is how a contradiction becomes a
+ * conclusion.
+ */
+function withConflictNote(
+  entry: Candidate,
+  extracted: ExtractedFacts,
+  ...keys: readonly FactKey[]
+): Candidate {
+  const note = conflictNoteFor(extracted, ...keys);
+  return note === null ? entry : { ...entry, detail: `${entry.detail} ${note}` };
+}
+
 function depositCapRule(input: RuleInput): readonly Candidate[] {
   const { facts, evidence } = input.extracted;
   const rules = input.jurisdiction.rules;
   const months = facts.depositMonths;
   const source = evidence.depositMonths ?? evidence.depositAmount;
   if (months === null || source === undefined) return [];
+  // A ratio outside this range is evidence that one of the two figures was misread, not evidence
+  // of a breach. "The deposit is 40 months of rent, 20 times the limit", cited to a statute, is a
+  // hallucination with a number in it — the exact failure this engine exists to make impossible.
+  if (months <= 0 || months > MAX_CREDIBLE_DEPOSIT_MONTHS) return [];
 
   const clause = input.clauses.find((c) => c.id === source.clauseId);
   if (clause === undefined) return [];
@@ -186,7 +299,17 @@ function depositCapRule(input: RuleInput): readonly Candidate[] {
     );
     // The provision that sets the cap is cited alongside the pattern's own rulings, because this
     // finding is arithmetic against that specific limit.
-    return entry === null ? [] : [withCitation(entry, capMonths.citation)];
+    return entry === null
+      ? []
+      : [
+          withConflictNote(
+            withCitation(entry, capMonths.citation),
+            input.extracted,
+            'depositMonths',
+            'depositAmount',
+            'rentAmount',
+          ),
+        ];
   }
 
   if (capWeeks !== null) {
@@ -200,7 +323,17 @@ function depositCapRule(input: RuleInput): readonly Candidate[] {
           (capWeeks.note === undefined ? '' : ` ${capWeeks.note}`),
         input.jurisdiction,
       );
-      return entry === null ? [] : [withCitation(entry, capWeeks.citation)];
+      return entry === null
+        ? []
+        : [
+            withConflictNote(
+              withCitation(entry, capWeeks.citation),
+              input.extracted,
+              'depositMonths',
+              'depositAmount',
+              'rentAmount',
+            ),
+          ];
     }
   }
 
@@ -235,7 +368,7 @@ function lockInRule(input: RuleInput): readonly Candidate[] {
   const entry = candidate('lock-in-period', clause, source.quote, detail, input.jurisdiction, {
     financialExposure: exposure,
   });
-  return entry === null ? [] : [entry];
+  return entry === null ? [] : [withConflictNote(entry, input.extracted, 'lockInMonths')];
 }
 
 /** The minimum difference that makes a notice split a finding rather than rounding. */
@@ -253,14 +386,15 @@ function noticeAsymmetryRule(input: RuleInput): readonly Candidate[] {
   const clause = input.clauses.find((c) => c.id === source.clauseId);
   if (clause === undefined) return [];
 
-  const entry = candidate(
-    'notice-asymmetry',
-    clause,
-    source.quote,
-    `The tenant must give ${tenant} days notice. The landlord must give ${landlord}. ` +
-      `That is ${round(tenant / Math.max(landlord, 1))} times as much warning one way as the other.`,
-    input.jurisdiction,
-  );
+  // A landlord side of zero is the point of the comparison, not a divide-by-zero to be clamped
+  // away: "thirty times as much warning" understates a clause that provides for none at all.
+  const detail =
+    landlord === 0
+      ? `The tenant must give ${tenant} days notice. The landlord may end the tenancy with none at all.`
+      : `The tenant must give ${tenant} days notice. The landlord must give ${landlord}. ` +
+        `That is ${round(tenant / landlord)} times as much warning one way as the other.`;
+
+  const entry = candidate('notice-asymmetry', clause, source.quote, detail, input.jurisdiction);
   return entry === null ? [] : [entry];
 }
 
@@ -285,7 +419,7 @@ function entryNoticeRule(input: RuleInput): readonly Candidate[] {
       : `The clause requires ${hours} hours notice. The standard that applies here is ${minimum?.value} hours.`;
 
   const entry = candidate('entry-without-notice', clause, source.quote, detail, input.jurisdiction);
-  return entry === null ? [] : [entry];
+  return entry === null ? [] : [withConflictNote(entry, input.extracted, 'entryNoticeHours')];
 }
 
 function lateFeeRule(input: RuleInput): readonly Candidate[] {
@@ -306,7 +440,7 @@ function lateFeeRule(input: RuleInput): readonly Candidate[] {
     `The late charge is ${percent} per cent. The ceiling referenced here is ${cap.value} per cent.`,
     input.jurisdiction,
   );
-  return entry === null ? [] : [entry];
+  return entry === null ? [] : [withConflictNote(entry, input.extracted, 'lateFeePercent')];
 }
 
 /** Above this, a stated annual increase is reported as steep — as a figure, not a legal claim. */
@@ -328,7 +462,7 @@ function escalationRule(input: RuleInput): readonly Candidate[] {
     `The agreement states an increase of ${percent} per cent. Over a three-year stay that compounds to about ${Math.round(((1 + percent / 100) ** 3 - 1) * 100)} per cent above the starting rent.`,
     input.jurisdiction,
   );
-  return entry === null ? [] : [entry];
+  return entry === null ? [] : [withConflictNote(entry, input.extracted, 'renewalIncreasePercent')];
 }
 
 const REGISTRATION_MENTIONED = /\bregist(?:er|ered|ration)\b|\bsub-registrar\b/i;
@@ -354,7 +488,7 @@ function registrationRule(input: RuleInput): readonly Candidate[] {
     `The term is ${months} months, above the ${threshold.value}-month point at which registration becomes compulsory, and the document does not mention registration.`,
     input.jurisdiction,
   );
-  return entry === null ? [] : [entry];
+  return entry === null ? [] : [withConflictNote(entry, input.extracted, 'termMonths')];
 }
 
 /** Long enough that a high reading grade reflects the drafting rather than a short fragment. */

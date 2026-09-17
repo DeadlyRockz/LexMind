@@ -78,9 +78,7 @@ export async function parsePdf(bytes: Uint8Array): Promise<NormalizedDocument> {
   }));
 
   // Only text-poor pages are worth an operator-list scan, which keeps the second signal cheap.
-  const suspicious = stats
-    .filter((s) => s.nonWhitespaceChars < 100)
-    .map((s) => s.page);
+  const suspicious = stats.filter((s) => s.nonWhitespaceChars < 100).map((s) => s.page);
   const withImages = suspicious.length === 0 ? [] : await pagesPaintingImages(proxy, suspicious);
   assertNotScanned(scannedPages(stats, withImages), totalPages);
 

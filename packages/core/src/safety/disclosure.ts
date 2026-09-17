@@ -20,8 +20,7 @@ import { NEVER_RULES } from '../domain/advice-boundary.ts';
 
 export const AI_DISCLOSURE = {
   heading: 'Before you upload',
-  isAi:
-    'LexMind is an AI tool. It reads the document you give it and explains what it says. It is not a lawyer and it does not give legal advice.',
+  isAi: 'LexMind is an AI tool. It reads the document you give it and explains what it says. It is not a lawyer and it does not give legal advice.',
   transmission:
     'If an AI provider key is configured, the text of your document is sent to Google’s Gemini API to produce the plain-English explanations. Names, addresses, ID numbers and account numbers are replaced with stand-ins before anything is sent, and put back only on your screen.',
   freeTier:

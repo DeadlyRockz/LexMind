@@ -17,7 +17,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "correctness": {
         "noUnusedVariables": "error",
         "noUnusedImports": "error",
@@ -33,8 +33,20 @@
         "useNamingConvention": "off"
       },
       "security": { "noDangerouslySetInnerHtml": "error" },
-      "a11y": { "recommended": true },
-      "complexity": { "noExcessiveCognitiveComplexity": { "level": "warn", "options": { "maxAllowedComplexity": 24 } } }
+      // Spelled out rather than inherited from the top-level preset: accessibility is a product
+      // requirement here, not a default. (`biome migrate` rewrites this to `"preset": "none"`,
+      // which silently disables every a11y rule — do not accept that change.)
+      "a11y": { "preset": "recommended" },
+      "complexity": {
+        // Off on purpose. tsconfig.base.json sets `noPropertyAccessFromIndexSignature`, which
+        // requires `env['KEY']` for index-signature types; this rule's fix (`env.KEY`) is exactly
+        // what that compiler flag rejects, so applying it would break `pnpm typecheck`.
+        "useLiteralKeys": "off",
+        "noExcessiveCognitiveComplexity": {
+          "level": "warn",
+          "options": { "maxAllowedComplexity": 24 }
+        }
+      }
     }
   },
   "overrides": [

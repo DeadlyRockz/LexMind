@@ -32,7 +32,8 @@ export const CITATIONS = {
     id: 'IN-MTA-11-2',
     authority: 'Model Tenancy Act 2021 (India)',
     provision: 's.11(2)',
-    summary: 'The security deposit is refundable to the tenant on vacating, subject to lawful deductions.',
+    summary:
+      'The security deposit is refundable to the tenant on vacating, subject to lawful deductions.',
     jurisdiction: 'IN-MTA',
     verified: true,
     source: 'Ministry of Housing and Urban Affairs, published text of the Model Tenancy Act 2021',
@@ -154,7 +155,8 @@ export const CITATIONS = {
     id: 'US-URLTA-1-403-A-2',
     authority: 'Uniform Residential Landlord and Tenant Act',
     provision: '§1.403(a)(2)',
-    summary: 'A rental agreement may not provide that the tenant authorizes a confession of judgment.',
+    summary:
+      'A rental agreement may not provide that the tenant authorizes a confession of judgment.',
     jurisdiction: 'US-URLTA',
     verified: true,
     source: 'Uniform Law Commission, URLTA (1972) Article I',
@@ -197,7 +199,8 @@ export const CITATIONS = {
     id: 'US-URLTA-2-101-A',
     authority: 'Uniform Residential Landlord and Tenant Act',
     provision: '§2.101(a)',
-    summary: 'A landlord may not demand or receive a security deposit exceeding one month periodic rent.',
+    summary:
+      'A landlord may not demand or receive a security deposit exceeding one month periodic rent.',
     jurisdiction: 'US-URLTA',
     verified: true,
     source: 'Uniform Law Commission, URLTA (1972) Article II',
@@ -266,7 +269,8 @@ export const CITATIONS = {
       'A residential security deposit may not exceed one month rent, and must be returned within 14 days of the tenant vacating.',
     jurisdiction: 'US-NY',
     verified: true,
-    source: 'New York General Obligations Law §7-108 (Housing Stability and Tenant Protection Act 2019)',
+    source:
+      'New York General Obligations Law §7-108 (Housing Stability and Tenant Protection Act 2019)',
     retrievedOn: RETRIEVED,
   },
   'US-MD-8-208-D-3': {

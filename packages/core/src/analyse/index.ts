@@ -10,6 +10,10 @@ export {
   parseHours,
   parseMultipleOfRent,
   parsePercent,
+  type SubjectAmount,
+  subjectAmounts,
+  subjectSentences,
+  type TextSpan,
   wordsToNumber,
 } from './amounts.ts';
 export {
@@ -20,9 +24,9 @@ export {
   untypedShare,
 } from './detect.ts';
 export {
+  type ClauseExplanation,
   ClauseExplanationSchema,
   ClauseExplanationsSchema,
-  type ClauseExplanation,
   explainClauses,
   type LeaseSummary,
   LeaseSummarySchema,
@@ -30,10 +34,14 @@ export {
 } from './explain.ts';
 export {
   actingParty,
+  conflictNoteFor,
   type ExtractedFacts,
   extractFacts,
   extractNotices,
+  type FactConflict,
   type FactEvidence,
+  type FactKey,
+  MAX_CREDIBLE_DEPOSIT_MONTHS,
   noticeDaysIn,
   type PartyNotice,
   sentenceContaining,
@@ -41,17 +49,22 @@ export {
 export {
   datedObligations,
   extractObligations,
+  type ObligationDraft,
   obligationBalance,
   obligationsByParty,
-  type ObligationDraft,
 } from './obligations.ts';
 export {
   type AnalyseOptions,
   type AnalysisResult,
   type AnalysisStats,
   analyse,
+  type ClauseAnalysisState,
+  type ClauseStatus,
   clausesToExplain,
+  type EmbeddedInstruction,
+  findEmbeddedInstructions,
   findingLabel,
+  isAnalysisGap,
 } from './pipeline.ts';
 export {
   applyCueRules,

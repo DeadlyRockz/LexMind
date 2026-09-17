@@ -1,18 +1,17 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { estimateTokens } from '../budget.ts';
 import { ModelError, type ModelErrorCode } from '../errors.ts';
 import {
   type JsonRequest,
   type JsonResult,
   type LlmPort,
-  NO_USAGE,
   type ModelTier,
   requestKey,
   type TextRequest,
   type Usage,
 } from '../port.ts';
 import { parseWithRepair } from '../validate.ts';
-import { estimateTokens } from '../budget.ts';
 
 /**
  * The deterministic replay adapter — the load-bearing piece of the whole model layer.
@@ -42,6 +41,12 @@ export interface Cassette {
   /** A recorded failure, so the error paths are testable without provoking a real one. */
   readonly error?: { readonly code: ModelErrorCode; readonly message: string };
 }
+
+/**
+ * What a developer is told to run on a key miss. It names the real `package.json` script, and a test
+ * holds it to that: a hint pointing at a command that does not exist costs more time than no hint.
+ */
+export const REGENERATE_HINT = 're-record the cassettes with `pnpm cassettes`.';
 
 export interface ReplayOptions {
   /** Match on the task label rather than the full request key. For unit tests only. */
@@ -83,7 +88,7 @@ export function createReplayAdapter(
         matchBy === 'task'
           ? `No recorded response for task "${request.task}".`
           : `No recorded response for task "${request.task}" (key ${key.slice(0, 12)}). ` +
-            'The prompt or schema has changed: re-record with `pnpm cassettes:record`.',
+              `The prompt or schema has changed: ${REGENERATE_HINT}`,
         {
           retryable: false,
           userMessage:
@@ -141,7 +146,5 @@ export function loadCassettes(directory: string): readonly Cassette[] {
   } catch {
     return [];
   }
-  return names.map(
-    (name) => JSON.parse(readFileSync(join(directory, name), 'utf8')) as Cassette,
-  );
+  return names.map((name) => JSON.parse(readFileSync(join(directory, name), 'utf8')) as Cassette);
 }

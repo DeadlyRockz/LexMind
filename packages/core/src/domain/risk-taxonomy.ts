@@ -94,8 +94,28 @@ export const RISK_PATTERNS = [
       { jurisdiction: 'US-URLTA', status: 'restricted', citations: ['US-URLTA-2-101-A'] },
     ],
     cues: [
-      ['deposit', 'caution money', 'bond'],
-      ['non-refundable', 'non refundable', 'shall not be refunded', 'not be returned', 'forfeited absolutely', 'stands forfeited'],
+      // The sum that is not refunded is as often called a fee as a deposit — and a non-refundable
+      // administration or holding fee is precisely the prohibited payment the Tenant Fees Act 2019
+      // cited below is about, so the vocabulary belongs in the same row rather than a second one.
+      [
+        'deposit',
+        'caution money',
+        'bond',
+        'administration fee',
+        'administrative fee',
+        'admin fee',
+        'holding fee',
+        'booking fee',
+        'joining fee',
+      ],
+      [
+        'non-refundable',
+        'non refundable',
+        'shall not be refunded',
+        'not be returned',
+        'forfeited absolutely',
+        'stands forfeited',
+      ],
     ],
   },
   {
@@ -110,13 +130,26 @@ export const RISK_PATTERNS = [
     asymmetric: true,
     rulings: [
       { jurisdiction: 'IN-STATE', status: 'restricted', citations: ['IN-CONTRACT-74'] },
-      { jurisdiction: 'IN-MTA', status: 'restricted', citations: ['IN-CONTRACT-74', 'IN-MTA-11-2'] },
+      {
+        jurisdiction: 'IN-MTA',
+        status: 'restricted',
+        citations: ['IN-CONTRACT-74', 'IN-MTA-11-2'],
+      },
       { jurisdiction: 'GB-ENG', status: 'unenforceable', citations: ['GB-TFA-2019'] },
     ],
     cues: [
       ['deposit', 'caution money'],
       ['forfeit', 'forfeited', 'shall stand forfeited', 'shall not be refunded'],
-      ['vacate before', 'vacates before', 'early termination', 'terminates before', 'prior to the expiry', 'before the expiry', 'lock-in', 'lock in'],
+      [
+        'vacate before',
+        'vacates before',
+        'early termination',
+        'terminates before',
+        'prior to the expiry',
+        'before the expiry',
+        'lock-in',
+        'lock in',
+      ],
     ],
   },
   {
@@ -132,7 +165,13 @@ export const RISK_PATTERNS = [
     rulings: [{ jurisdiction: 'GB-ENG', status: 'restricted', citations: ['GB-TFA-2019'] }],
     cues: [
       ['deposit'],
-      ['interest free', 'interest-free', 'without interest', 'no interest shall be', 'shall not carry interest'],
+      [
+        'interest free',
+        'interest-free',
+        'without interest',
+        'no interest shall be',
+        'shall not carry interest',
+      ],
     ],
   },
 
@@ -166,7 +205,15 @@ export const RISK_PATTERNS = [
     asymmetric: true,
     rulings: [{ jurisdiction: 'IN-STATE', status: 'restricted', citations: ['IN-CPA-2-46'] }],
     cues: [
-      ['automatically renew', 'automatically be renewed', 'shall stand renewed', 'deemed renewed', 'deemed to be renewed', 'auto-renew', 'shall be extended automatically'],
+      [
+        'automatically renew',
+        'automatically be renewed',
+        'shall stand renewed',
+        'deemed renewed',
+        'deemed to be renewed',
+        'auto-renew',
+        'shall be extended automatically',
+      ],
     ],
   },
   {
@@ -181,7 +228,16 @@ export const RISK_PATTERNS = [
     asymmetric: true,
     rulings: [{ jurisdiction: 'IN-STATE', status: 'restricted', citations: ['IN-CONTRACT-74'] }],
     cues: [
-      ['double the rent', 'double rent', 'twice the rent', 'thrice the rent', 'three times the rent', 'two times the rent', '2 times the rent', '200% of the rent'],
+      [
+        'double the rent',
+        'double rent',
+        'twice the rent',
+        'thrice the rent',
+        'three times the rent',
+        'two times the rent',
+        '2 times the rent',
+        '200% of the rent',
+      ],
     ],
   },
   {
@@ -222,8 +278,37 @@ export const RISK_PATTERNS = [
       // Ending a tenancy is drafted as recovering possession at least as often as it is drafted as
       // terminating: England's model instruments say "recover possession", India's say "terminate",
       // and a detector that knows only one word reads only half the world's leases.
-      ['terminat', 'revoke this', 'cancel this agreement', 'bring this agreement to an end', 'recover possession', 'obtain possession', 'take possession', 'repossess', 'evict', 'end this tenancy', 'end the tenancy', 'determine this tenancy', 'determine the tenancy'],
-      ['sole discretion', 'absolute discretion', 'without assigning any reason', 'without assigning reason', 'without cause', 'for any reason whatsoever', 'at will', 'at any time without'],
+      [
+        'terminat',
+        'revoke this',
+        'cancel this agreement',
+        'bring this agreement to an end',
+        'recover possession',
+        'obtain possession',
+        'take possession',
+        'repossess',
+        'evict',
+        'end this tenancy',
+        'end the tenancy',
+        'determine this tenancy',
+        'determine the tenancy',
+      ],
+      [
+        'sole discretion',
+        'absolute discretion',
+        'without assigning any reason',
+        'without assigning reason',
+        'without cause',
+        'for any reason whatsoever',
+        'at will',
+        'at any time without',
+      ],
+      // Whose right it is, under every name the instruments use. Without this group the row reads
+      // "The Tenant may terminate this Agreement at any time without penalty" — a right the tenant
+      // holds and the landlord does not — as the landlord ending the tenancy at will, which
+      // inverts the clause and reports the fairest drafting in the document as its most serious
+      // defect.
+      ['landlord', 'lessor', 'licensor', 'owner', 'management'],
     ],
   },
   {
@@ -259,12 +344,42 @@ export const RISK_PATTERNS = [
       // Three groups rather than one glued phrase: real drafting puts the object between the verb
       // and its adverb — "terminate *this agreement* with immediate effect" — so a contiguous
       // "terminate with immediate effect" cue matches a sentence nobody writes.
-      ['terminat', 'cancel this agreement', 'stand cancelled', 'bring this agreement to an end', 'evict', 'recover possession', 're-enter', 'reenter', 'forfeit the tenancy'],
-      ['immediate effect', 'immediately', 'forthwith', 'without notice', 'without any notice', 'without prior notice', 'at once', 'no opportunity to', 'without any opportunity'],
+      [
+        'terminat',
+        'cancel this agreement',
+        'stand cancelled',
+        'bring this agreement to an end',
+        'evict',
+        'recover possession',
+        're-enter',
+        'reenter',
+        'forfeit the tenancy',
+      ],
+      [
+        'immediate effect',
+        'immediately',
+        'forthwith',
+        'without notice',
+        'without any notice',
+        'without prior notice',
+        'at once',
+        'no opportunity to',
+        'without any opportunity',
+      ],
       ['breach', 'default', 'violat', 'fail'],
     ],
     // A stated chance to put the breach right is the answer to this check.
-    exclude: ['opportunity to remedy', 'opportunity to cure', 'opportunity to rectify', 'time to remedy', 'notice to remedy', 'notice to rectify', 'cure period', 'days to remedy', 'days to rectify'],
+    exclude: [
+      'opportunity to remedy',
+      'opportunity to cure',
+      'opportunity to rectify',
+      'time to remedy',
+      'notice to remedy',
+      'notice to rectify',
+      'cure period',
+      'days to remedy',
+      'days to rectify',
+    ],
   },
   {
     id: 'forfeiture-lockout-self-help',
@@ -282,7 +397,21 @@ export const RISK_PATTERNS = [
       { jurisdiction: 'IN-MTA', status: 'void', citations: ['IN-MTA-20'] },
     ],
     cues: [
-      ['lock the premises', 'lock out', 'change the locks', 're-enter', 'reenter', 're-take possession', 'take forcible possession', 'forcibly evict', 'disconnect', 'cut off', 'discontinue the supply', 'remove the belongings', 'remove the articles'],
+      [
+        'lock the premises',
+        'lock out',
+        'change the locks',
+        're-enter',
+        'reenter',
+        're-take possession',
+        'take forcible possession',
+        'forcibly evict',
+        'disconnect',
+        'cut off',
+        'discontinue the supply',
+        'remove the belongings',
+        'remove the articles',
+      ],
     ],
     exclude: ['through a court', 'by due process of law', 'order of the competent court'],
   },
@@ -304,7 +433,14 @@ export const RISK_PATTERNS = [
     ],
     cues: [
       ['enter', 'entry', 'access to the premises', 'inspect'],
-      ['at any time', 'without notice', 'without prior notice', 'without any notice', 'without intimation', 'unannounced'],
+      [
+        'at any time',
+        'without notice',
+        'without prior notice',
+        'without any notice',
+        'without intimation',
+        'unannounced',
+      ],
     ],
     exclude: ['emergency only', 'in case of emergency'],
     numeric: 'entry-notice',
@@ -327,8 +463,26 @@ export const RISK_PATTERNS = [
       { jurisdiction: 'US-URLTA', status: 'restricted', citations: ['US-URLTA-2-104'] },
     ],
     cues: [
-      ['tenant shall', 'lessee shall', 'licensee shall', 'tenant is responsible', 'tenant agrees to', 'at the cost of the tenant', 'at the tenant own cost'],
-      ['structural', 'major repairs', 'all repairs', 'any and all repairs', 'entire maintenance', 'whole of the maintenance', 'roof', 'plumbing and wiring', 'all repairs whatsoever'],
+      [
+        'tenant shall',
+        'lessee shall',
+        'licensee shall',
+        'tenant is responsible',
+        'tenant agrees to',
+        'at the cost of the tenant',
+        'at the tenant own cost',
+      ],
+      [
+        'structural',
+        'major repairs',
+        'all repairs',
+        'any and all repairs',
+        'entire maintenance',
+        'whole of the maintenance',
+        'roof',
+        'plumbing and wiring',
+        'all repairs whatsoever',
+      ],
     ],
   },
   {
@@ -343,12 +497,24 @@ export const RISK_PATTERNS = [
     asymmetric: true,
     rulings: [
       { jurisdiction: 'US-CA', status: 'void', citations: ['US-CA-1953-A'] },
-      { jurisdiction: 'US-URLTA', status: 'restricted', citations: ['US-URLTA-2-104', 'US-URLTA-1-403-A-1'] },
+      {
+        jurisdiction: 'US-URLTA',
+        status: 'restricted',
+        citations: ['US-URLTA-2-104', 'US-URLTA-1-403-A-1'],
+      },
       { jurisdiction: 'GB-ENG', status: 'void', citations: ['GB-LTA-1985-12'] },
     ],
     cues: [
       ['as is', 'as-is', 'present condition', 'existing condition'],
-      ['no warranty', 'without any warranty', 'waives', 'waive', 'disclaim', 'accepts the premises', 'satisfied himself'],
+      [
+        'no warranty',
+        'without any warranty',
+        'waives',
+        'waive',
+        'disclaim',
+        'accepts the premises',
+        'satisfied himself',
+      ],
     ],
   },
 
@@ -364,7 +530,11 @@ export const RISK_PATTERNS = [
     reversible: false,
     asymmetric: true,
     rulings: [
-      { jurisdiction: 'US-URLTA', status: 'void', citations: ['US-URLTA-1-403-A-1', 'US-URLTA-1-403-B'] },
+      {
+        jurisdiction: 'US-URLTA',
+        status: 'void',
+        citations: ['US-URLTA-1-403-A-1', 'US-URLTA-1-403-B'],
+      },
       { jurisdiction: 'US-CA', status: 'void', citations: ['US-CA-1953-A'] },
       { jurisdiction: 'IN-STATE', status: 'restricted', citations: ['IN-CPA-2-46'] },
     ],
@@ -385,10 +555,20 @@ export const RISK_PATTERNS = [
     reversible: false,
     asymmetric: true,
     rulings: [
-      { jurisdiction: 'US-URLTA', status: 'void', citations: ['US-URLTA-1-403-A-2', 'US-URLTA-1-403-B'] },
+      {
+        jurisdiction: 'US-URLTA',
+        status: 'void',
+        citations: ['US-URLTA-1-403-A-2', 'US-URLTA-1-403-B'],
+      },
     ],
     cues: [
-      ['confession of judgment', 'confess judgment', 'consent to judgment', 'cognovit', 'warrant of attorney to confess'],
+      [
+        'confession of judgment',
+        'confess judgment',
+        'consent to judgment',
+        'cognovit',
+        'warrant of attorney to confess',
+      ],
     ],
   },
   {
@@ -402,16 +582,48 @@ export const RISK_PATTERNS = [
     reversible: true,
     asymmetric: true,
     rulings: [
-      { jurisdiction: 'US-URLTA', status: 'void', citations: ['US-URLTA-1-403-A-3', 'US-URLTA-1-403-B'] },
+      {
+        jurisdiction: 'US-URLTA',
+        status: 'void',
+        citations: ['US-URLTA-1-403-A-3', 'US-URLTA-1-403-B'],
+      },
       { jurisdiction: 'IN-STATE', status: 'restricted', citations: ['IN-CPA-2-46'] },
     ],
     cues: [
-      ['attorney fee', "attorney's fee", 'attorneys fees', 'advocate fee', 'legal fees', 'legal costs', 'cost of litigation', 'solicitor'],
+      [
+        'attorney fee',
+        "attorney's fee",
+        'attorneys fees',
+        'advocate fee',
+        'legal fees',
+        'legal costs',
+        'cost of litigation',
+        'solicitor',
+      ],
       // The paying party is the tenant under every name the instruments use for them: an Indian
       // leave-and-licence agreement says "the licensee shall pay", a lease says "the lessee".
       // Requiring the word "tenant" would read one-way fee shifting as balanced wherever the
       // drafter happened to use a different word for the same person.
-      ['tenant shall', 'tenant agrees', 'lessee shall', 'lessee agrees', 'licensee shall', 'licensee agrees', 'borne by the tenant', 'borne by the lessee', 'borne by the licensee', 'payable by the tenant', 'payable by the lessee', 'payable by the licensee', 'reimburse the landlord', 'reimburse the lessor', 'reimburse the licensor', 'indemnify the landlord', 'indemnify the lessor', 'indemnify the licensor'],
+      [
+        'tenant shall',
+        'tenant agrees',
+        'lessee shall',
+        'lessee agrees',
+        'licensee shall',
+        'licensee agrees',
+        'borne by the tenant',
+        'borne by the lessee',
+        'borne by the licensee',
+        'payable by the tenant',
+        'payable by the lessee',
+        'payable by the licensee',
+        'reimburse the landlord',
+        'reimburse the lessor',
+        'reimburse the licensor',
+        'indemnify the landlord',
+        'indemnify the lessor',
+        'indemnify the licensor',
+      ],
     ],
   },
   {
@@ -425,12 +637,25 @@ export const RISK_PATTERNS = [
     reversible: true,
     asymmetric: true,
     rulings: [
-      { jurisdiction: 'US-URLTA', status: 'void', citations: ['US-URLTA-1-403-A-4', 'US-URLTA-1-403-B'] },
+      {
+        jurisdiction: 'US-URLTA',
+        status: 'void',
+        citations: ['US-URLTA-1-403-A-4', 'US-URLTA-1-403-B'],
+      },
       { jurisdiction: 'US-CA', status: 'void', citations: ['US-CA-1953-A'] },
       { jurisdiction: 'IN-STATE', status: 'restricted', citations: ['IN-CPA-2-46'] },
     ],
     cues: [
-      ['indemnify', 'indemnity', 'hold harmless', 'shall not be liable', 'shall not be responsible', 'not be responsible for any loss', 'at the tenant own risk', 'entirely at the risk of the tenant'],
+      [
+        'indemnify',
+        'indemnity',
+        'hold harmless',
+        'shall not be liable',
+        'shall not be responsible',
+        'not be responsible for any loss',
+        'at the tenant own risk',
+        'entirely at the risk of the tenant',
+      ],
     ],
   },
 
@@ -446,12 +671,23 @@ export const RISK_PATTERNS = [
     reversible: false,
     asymmetric: false,
     rulings: [
-      { jurisdiction: 'GB-ENG', status: 'unenforceable', citations: ['GB-AA-1996-91', 'GB-CRA-2015-SCH2-20'] },
+      {
+        jurisdiction: 'GB-ENG',
+        status: 'unenforceable',
+        citations: ['GB-AA-1996-91', 'GB-CRA-2015-SCH2-20'],
+      },
       { jurisdiction: 'US-CA', status: 'restricted', citations: ['US-CA-1953-A'] },
     ],
     cues: [
       ['arbitration', 'arbitrator', 'arbitral'],
-      ['shall be referred', 'exclusively', 'sole', 'binding', 'final and binding', 'must be resolved'],
+      [
+        'shall be referred',
+        'exclusively',
+        'sole',
+        'binding',
+        'final and binding',
+        'must be resolved',
+      ],
     ],
   },
   {
@@ -468,7 +704,9 @@ export const RISK_PATTERNS = [
       { jurisdiction: 'GB-ENG', status: 'unenforceable', citations: ['GB-CRA-2015-SCH2-20'] },
       { jurisdiction: 'US-CA', status: 'restricted', citations: ['US-CA-1953-A'] },
     ],
-    cues: [['class action', 'class-action', 'class-wide', 'collective action', 'representative action']],
+    cues: [
+      ['class action', 'class-action', 'class-wide', 'collective action', 'representative action'],
+    ],
   },
   {
     id: 'jury-trial-waiver',
@@ -499,7 +737,11 @@ export const RISK_PATTERNS = [
     reversible: true,
     asymmetric: false,
     rulings: [
-      { jurisdiction: 'US-URLTA', status: 'restricted', citations: ['US-MD-8-208-D-3', 'US-NV-118A-210'] },
+      {
+        jurisdiction: 'US-URLTA',
+        status: 'restricted',
+        citations: ['US-MD-8-208-D-3', 'US-NV-118A-210'],
+      },
       { jurisdiction: 'GB-ENG', status: 'restricted', citations: ['GB-TFA-2019-LATE'] },
     ],
     cues: [],
@@ -537,7 +779,14 @@ export const RISK_PATTERNS = [
     rulings: [{ jurisdiction: 'IN-STATE', status: 'restricted', citations: ['IN-CPA-2-46'] }],
     cues: [
       ['increase', 'increas', 'escalat', 'revis', 'enhanc'],
-      ['sole discretion', 'absolute discretion', 'as may be decided by the landlord', 'as determined by the landlord', 'at the discretion of the landlord', 'such amount as the landlord'],
+      [
+        'sole discretion',
+        'absolute discretion',
+        'as may be decided by the landlord',
+        'as determined by the landlord',
+        'at the discretion of the landlord',
+        'such amount as the landlord',
+      ],
     ],
   },
   {
@@ -571,7 +820,14 @@ export const RISK_PATTERNS = [
       { jurisdiction: 'GB-ENG', status: 'restricted', citations: ['GB-CRA-2015-68'] },
     ],
     cues: [
-      ['as amended from time to time', 'may amend', 'may modify', 'may revise', 'may frame such rules', 'as may be notified'],
+      [
+        'as amended from time to time',
+        'may amend',
+        'may modify',
+        'may revise',
+        'may frame such rules',
+        'as may be notified',
+      ],
       ['rules', 'regulations', 'terms', 'bye-laws', 'byelaws', 'conditions'],
     ],
   },
@@ -591,7 +847,14 @@ export const RISK_PATTERNS = [
     ],
     cues: [
       ['guest', 'guests', 'visitor', 'visitors', 'overnight'],
-      ['prior written permission', 'prior permission', 'prior consent', 'shall not be permitted', 'not be allowed', 'prohibited'],
+      [
+        'prior written permission',
+        'prior permission',
+        'prior consent',
+        'shall not be permitted',
+        'not be allowed',
+        'prohibited',
+      ],
     ],
   },
   {
@@ -607,7 +870,19 @@ export const RISK_PATTERNS = [
     rulings: [{ jurisdiction: 'US-URLTA', status: 'restricted', citations: ['US-FHA-3604'] }],
     cues: [
       ['only', 'shall not', 'not be permitted', 'restricted to', 'prohibited'],
-      ['vegetarian', 'non-vegetarian', 'bachelor', 'bachelors', 'spinster', 'marital status', 'religion', 'caste', 'community', 'unmarried couple', 'children shall not'],
+      [
+        'vegetarian',
+        'non-vegetarian',
+        'bachelor',
+        'bachelors',
+        'spinster',
+        'marital status',
+        'religion',
+        'caste',
+        'community',
+        'unmarried couple',
+        'children shall not',
+      ],
     ],
   },
 
@@ -640,9 +915,7 @@ export const RISK_PATTERNS = [
     reversible: true,
     asymmetric: false,
     rulings: [{ jurisdiction: 'GB-ENG', status: 'unenforceable', citations: ['GB-RRA-2025'] }],
-    cues: [
-      ['assured shorthold tenancy', 'section 21', 's.21 notice', 'shorthold'],
-    ],
+    cues: [['assured shorthold tenancy', 'section 21', 's.21 notice', 'shorthold']],
   },
 ] as const satisfies readonly RiskPattern[];
 

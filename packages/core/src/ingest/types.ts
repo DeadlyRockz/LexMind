@@ -33,7 +33,11 @@ export class IngestError extends Error {
   constructor(
     code: IngestErrorCode,
     message: string,
-    options?: { readonly remedy?: string; readonly pages?: readonly number[]; readonly cause?: unknown },
+    options?: {
+      readonly remedy?: string;
+      readonly pages?: readonly number[];
+      readonly cause?: unknown;
+    },
   ) {
     super(message, options?.cause === undefined ? undefined : { cause: options.cause });
     this.name = 'IngestError';

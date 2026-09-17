@@ -53,13 +53,7 @@ export interface Citation {
 }
 
 /** One of the six groups the UI orders clauses by. */
-export type ClauseGroup =
-  | 'formation'
-  | 'term'
-  | 'money'
-  | 'condition'
-  | 'use'
-  | 'risk';
+export type ClauseGroup = 'formation' | 'term' | 'money' | 'condition' | 'use' | 'risk';
 
 export interface ClauseType {
   readonly id: string;

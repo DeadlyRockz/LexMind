@@ -1,0 +1,10 @@
+{
+  "provenance": "SYNTHETIC: hand-authored response written to the plan-06 plain-English target. NOT recorded from Gemini or any other model; no API key was used. Readability measured on it proves the measurement pipeline and a regression floor, not live-model quality.",
+  "scenario": "golden",
+  "lease": "injected",
+  "key": "7c3485d55452fe7ae59a2a2f1d0f6eacad04598a24ba2e950e82a9798d5cb12c",
+  "task": "explain-clauses",
+  "tier": "analysis",
+  "model": "synthetic-hand-authored",
+  "response": "{\"explanations\":[{\"clauseId\":\"c4\",\"plainEnglish\":\"You pay a deposit of 5,000, which is five months of rent. The lease says none of it will be paid back, for any reason.\",\"quote\":\"non-refundable and shall not be refunded under any circumstances.\",\"unusual\":true},{\"clauseId\":\"c5\",\"plainEnglish\":\"You must give ninety days of notice to leave. The landlord can end the tenancy at any time and needs no reason.\",\"quote\":\"The tenant shall give ninety days notice.\",\"unusual\":true}]}"
+}

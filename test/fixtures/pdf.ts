@@ -55,10 +55,9 @@ export function buildPdf(pages: readonly PdfPage[]): Uint8Array {
 
   // Object 1 catalog, 2 page tree, 3 font, then per page: a page object and a contents stream.
   const firstPageObject = 4;
-  const kids = Array.from(
-    { length: pageCount },
-    (_, i) => `${firstPageObject + i * 2} 0 R`,
-  ).join(' ');
+  const kids = Array.from({ length: pageCount }, (_, i) => `${firstPageObject + i * 2} 0 R`).join(
+    ' ',
+  );
 
   objects.push('<< /Type /Catalog /Pages 2 0 R >>');
   objects.push(`<< /Type /Pages /Kids [${kids}] /Count ${pageCount} >>`);
@@ -72,7 +71,9 @@ export function buildPdf(pages: readonly PdfPage[]): Uint8Array {
         `/Resources << /Font << /F1 3 0 R >> >> /Contents ${contentsRef} 0 R >>`,
     );
     const stream = contentStream(page);
-    objects.push(`<< /Length ${Buffer.byteLength(stream, 'latin1')} >>\nstream\n${stream}\nendstream`);
+    objects.push(
+      `<< /Length ${Buffer.byteLength(stream, 'latin1')} >>\nstream\n${stream}\nendstream`,
+    );
   }
 
   let pdf = '%PDF-1.4\n';
@@ -93,7 +94,10 @@ export function buildPdf(pages: readonly PdfPage[]): Uint8Array {
 }
 
 /** A single-column text PDF, one line per entry, laid out top to bottom. */
-export function buildTextPdf(lines: readonly string[], options?: { readonly headings?: readonly number[] }): Uint8Array {
+export function buildTextPdf(
+  lines: readonly string[],
+  options?: { readonly headings?: readonly number[] },
+): Uint8Array {
   const headings = new Set(options?.headings ?? []);
   return buildPdf([
     {
@@ -111,10 +115,7 @@ export function buildTextPdf(lines: readonly string[], options?: { readonly head
  * A two-column PDF. Content-stream order deliberately interleaves the columns, which is exactly
  * how a real two-column document behaves: `getTextContent()` emits draw order, not reading order.
  */
-export function buildTwoColumnPdf(
-  left: readonly string[],
-  right: readonly string[],
-): Uint8Array {
+export function buildTwoColumnPdf(left: readonly string[], right: readonly string[]): Uint8Array {
   const lines: TextLine[] = [];
   const rows = Math.max(left.length, right.length);
   for (let i = 0; i < rows; i += 1) {
@@ -134,9 +135,7 @@ export function buildScannedPdf(pageCount = 2): Uint8Array {
 
 /** A scan with a stray text header, the case a bare `items.length === 0` test misses. */
 export function buildScannedPdfWithHeader(): Uint8Array {
-  return buildPdf([
-    { lines: [{ text: 'Scanned by OfficeScan', x: 72, y: 760 }], withImage: true },
-  ]);
+  return buildPdf([{ lines: [{ text: 'Scanned by OfficeScan', x: 72, y: 760 }], withImage: true }]);
 }
 
 export function buildManyPagePdf(pageCount: number): Uint8Array {

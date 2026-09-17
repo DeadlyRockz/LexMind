@@ -36,8 +36,10 @@ const POWER = /\b(?:may|is entitled to|reserves the right to|shall be entitled t
 
 const WHEN_PATTERNS: readonly RegExp[] = [
   /\bon or before the \w+(?:\s+\w+)? day of (?:each|every) month\b/i,
-  /\bwithin \w+(?:\s*\(\d+\))?\s*(?:days?|weeks?|months?|hours?)\b/i,
-  /\bat least \w+(?:\s*\(\d+\))?\s*(?:days?|weeks?|months?|hours?)\b/i,
+  // `[\w-]+`, not `\w+`: a hyphenated number — "at least twenty-four hours" — is how an entry or
+  // notice deadline is most often written, and `\w+` stops at the hyphen and loses the deadline.
+  /\bwithin [\w-]+(?:\s*\(\d+\))?\s*(?:days?|weeks?|months?|hours?)\b/i,
+  /\bat least [\w-]+(?:\s*\(\d+\))?\s*(?:days?|weeks?|months?|hours?)\b/i,
   /\bby the \w+ day of\b/i,
   /\bon the (?:first|last|\d+(?:st|nd|rd|th)) day of (?:each|every|the) (?:month|year)\b/i,
   /\b(?:monthly|annually|quarterly|每)\b/i,
@@ -83,9 +85,7 @@ export function extractObligations(clauses: readonly Clause[]): readonly Obligat
 
       // A consequence often sits in the next sentence rather than this one, which is exactly why
       // obligations are hard to read off a lease by eye.
-      const lookahead = sentences
-        .slice(index, index + 1 + CONSEQUENCE_LOOKAHEAD)
-        .join(' ');
+      const lookahead = sentences.slice(index, index + 1 + CONSEQUENCE_LOOKAHEAD).join(' ');
 
       drafts.push({
         party,
@@ -116,9 +116,7 @@ export function obligationsByParty(
 /**
  * The obligations that carry a deadline, which are the ones that end up as calendar entries.
  */
-export function datedObligations(
-  drafts: readonly ObligationDraft[],
-): readonly ObligationDraft[] {
+export function datedObligations(drafts: readonly ObligationDraft[]): readonly ObligationDraft[] {
   return drafts.filter((draft) => draft.when !== null);
 }
 

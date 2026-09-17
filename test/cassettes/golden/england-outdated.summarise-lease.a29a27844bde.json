@@ -1,0 +1,10 @@
+{
+  "provenance": "SYNTHETIC: hand-authored response written to the plan-06 plain-English target. NOT recorded from Gemini or any other model; no API key was used. Readability measured on it proves the measurement pipeline and a regression floor, not live-model quality.",
+  "scenario": "golden",
+  "lease": "england-outdated",
+  "key": "a29a27844bde98c423495094063de0260f820285880d36abbe7803908495e934",
+  "task": "summarise-lease",
+  "tier": "analysis",
+  "model": "synthetic-hand-authored",
+  "response": "{\"sections\":[{\"part\":\"overview\",\"text\":\"The document calls itself an assured shorthold tenancy. It is for a home in England and Wales.\",\"quote\":\"This assured shorthold tenancy is granted under the Housing Act 1988\"},{\"part\":\"money\",\"text\":\"You pay rent of £1,400 a month. You also pay a deposit of £2,800 and a fee of £300 that is not paid back.\",\"quote\":\"The tenant shall pay rent of £1,400 each month.\"},{\"part\":\"timing\",\"text\":\"Interest on late rent starts on the day the rent is due. The document does not say how long the fixed term lasts.\",\"quote\":\"Interest at 12 per cent per annum shall be charged on rent from the day it falls due.\"},{\"part\":\"obligations\",\"text\":\"You pay for all repairs to the main structure and the outside of the building.\",\"quote\":\"The tenant shall be responsible for all repairs to the structure and exterior of the premises.\"},{\"part\":\"exit\",\"text\":\"The landlord says they can take the home back after the fixed term with a section 21 notice. The document does not say how you can end the tenancy.\",\"quote\":\"by serving a section 21 notice at any time after the fixed\"}]}"
+}

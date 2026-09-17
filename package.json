@@ -20,6 +20,7 @@
     "lexmind": "node --experimental-strip-types packages/core/src/cli.ts",
     "eval": "node --experimental-strip-types scripts/eval.ts",
     "bench": "node --experimental-strip-types scripts/bench.ts",
+    "cassettes": "node --experimental-strip-types scripts/cassettes.ts",
     "check:size": "bash scripts/check-size.sh",
     "verify": "pnpm typecheck && pnpm lint && pnpm coverage && pnpm check:size"
   },

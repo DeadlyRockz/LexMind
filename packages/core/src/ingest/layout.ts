@@ -135,7 +135,7 @@ export function assembleLines(items: readonly LayoutItem[]): readonly Line[] {
   const tolerance = fontSize * LINE_TOLERANCE_RATIO;
 
   // PDF space has its origin bottom-left, so reading order is descending y then ascending x.
-  const sorted = [...present].sort((a, b) => (b.y - a.y) || (a.x - b.x));
+  const sorted = [...present].sort((a, b) => b.y - a.y || a.x - b.x);
 
   const lines: Line[] = [];
   let group: LayoutItem[] = [];
@@ -229,7 +229,8 @@ export function groupIntoBlocks(lines: readonly Line[], page: number): readonly 
     const previous = lines[i - 1];
     const heading = headingLevelFor(line, medianFontSize);
 
-    const verticalBreak = previous !== undefined && previous.y - line.y > medianDelta * PARAGRAPH_GAP_RATIO;
+    const verticalBreak =
+      previous !== undefined && previous.y - line.y > medianDelta * PARAGRAPH_GAP_RATIO;
     const numberedBreak = NUMBERING_START.test(line.text);
     const headingBreak = heading !== undefined || bufferHeading !== undefined;
 
@@ -250,9 +251,10 @@ export function groupIntoBlocks(lines: readonly Line[], page: number): readonly 
  * pages is furniture. Left in, each repetition becomes a spurious clause, and "Page 3 of 12"
  * ends up cited as a term of the tenancy.
  */
-export function removeRepeatedFurniture(
-  pages: readonly (readonly Line[])[],
-): { readonly pages: readonly (readonly Line[])[]; readonly removed: readonly string[] } {
+export function removeRepeatedFurniture(pages: readonly (readonly Line[])[]): {
+  readonly pages: readonly (readonly Line[])[];
+  readonly removed: readonly string[];
+} {
   if (pages.length < 3) return { pages, removed: [] };
 
   const counts = new Map<string, number>();

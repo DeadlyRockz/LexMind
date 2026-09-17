@@ -1,5 +1,9 @@
-import { ANSWERABLE_OVERRIDES, CROSSING_RULES, type CrossingKind } from '../domain/advice-boundary.ts';
-import { collapseWhitespace } from '../util/text.ts';
+import {
+  ANSWERABLE_OVERRIDES,
+  CROSSING_RULES,
+  type CrossingKind,
+} from '../domain/advice-boundary.ts';
+import { collapseWhitespace, foldPunctuation } from '../util/text.ts';
 
 /**
  * The information / advice boundary, enforced on the *request* rather than only on the output.
@@ -113,6 +117,18 @@ export function refusalText(decision: RefusedDecision): string {
 /**
  * A guard on generated output, for the case where the model drifts into advice despite the system
  * instruction. Output-side only — the request-side classifier above is the primary control.
+ *
+ * Scan the model's **own prose only**, never a quote it copied out of the document. A lease is
+ * perfectly capable of containing "you should" or "demand that" in its own words, and dropping an
+ * explanation because the *document* gives an instruction would be an over-refusal caused by the
+ * very text we are trying to explain.
+ *
+ * The list is deliberately blunt, and that costs some precision: "the landlord may demand that you
+ * vacate" is a faithful restatement that this scanner will nonetheless flag. That trade is made
+ * knowingly. The cost of a false positive is one clause explained by the deterministic layer alone
+ * — which is the product's floor and is still shown; the cost of a false negative is LexMind
+ * telling a tenant what to do, which is the one thing the whole design exists to prevent. Fail
+ * closed, and say so to the reader rather than dropping it silently.
  */
 const ADVICE_PHRASES: readonly string[] = [
   'you should',
@@ -132,7 +148,84 @@ const ADVICE_PHRASES: readonly string[] = [
   'is unenforceable against you',
 ];
 
+const LEASE_SUBJECT = String.raw`(?:this|the|your)\s+(?:(?:rental|tenancy|lease)\s+)?(?:lease|agreement|contract|tenancy|document|deal)`;
+const PROVISION_SUBJECT = String.raw`(?:this|that|the|each|every)\s+(?:[a-z-]+\s+)?(?:clause|term|provision|condition)s?`;
+const INTENSIFIERS = String.raw`(?:(?:completely|totally|perfectly|entirely|fully|very|quite|really|generally|overall|legally|absolutely|reasonably|basically|pretty)\s+){0,2}`;
+/** "Valid for twelve months" and "good until March" state a duration, not a verdict. */
+const NOT_A_DURATION = String.raw`(?!\s+(?:for|until|till|from|through)\b)`;
+
+/**
+ * Verdicts, which are advice with the "you should" taken out.
+ *
+ * The Judicial Council of California's test (see `classifyRequest`) sorts *questions*: "Can I?"
+ * and "How do I?" ask for information, "Should I?" asks for advice. A verdict is the answer to the
+ * "Should I?" question, stated as a fact about the document — "this lease is safe to sign", "there
+ * are no risks in this agreement" — so it crosses the same line while using none of the phrases
+ * above. It is also exactly what an obeyed prompt injection produces: the planted instruction in
+ * the adversarial cassette asks for "completely fair" and "no risks", not for "you should".
+ *
+ * Every pattern is anchored on a *judgement* of the whole agreement, the reader's decision, or a
+ * provision's legal status. Describing a term stays untouched, however reassuring the term is:
+ * "this clause says the deposit is refundable" reports the document, and "the lease does not list a
+ * late fee" is the absence answer the system preamble asks for. The negative cases in
+ * `output-guard.test.ts` pin that.
+ *
+ * Matched against lower-cased, punctuation-folded, whitespace-collapsed prose, so no pattern needs
+ * the `i` flag, and none is global, so `exec` carries no state between calls.
+ */
+const VERDICT_PATTERNS: readonly RegExp[] = [
+  // A verdict on the agreement: "this lease is completely fair", "your contract is not legal".
+  new RegExp(
+    String.raw`\b${LEASE_SUBJECT}\s+(?:is|looks|seems|appears|remains)\s+(?:to\s+be\s+)?(?:not\s+)?${INTENSIFIERS}(?:(?:safe|unsafe|fair|unfair|legal|illegal|lawful|unlawful|enforceable|unenforceable|invalid|void|risk-free|risky|harmless|acceptable|reasonable|unreasonable|fine|ok|okay|bad)\b|(?:valid|good)\b${NOT_A_DURATION})`,
+  ),
+  // The same verdict with the adjective first: "this is a fair lease", "looks like a good deal".
+  new RegExp(
+    String.raw`\b(?:is|looks\s+like|seems\s+like|appears\s+to\s+be)\s+(?:a|an)\s+${INTENSIFIERS}(?:safe|fair|good|great|legal|valid|balanced|reasonable|bad|unfair|risky)\s+(?:lease|agreement|contract|deal|tenancy)\b`,
+  ),
+  // The legal status of a provision, which the system preamble forbids the model to state.
+  new RegExp(
+    String.raw`\b${PROVISION_SUBJECT}\s+(?:is|are)\s+(?:not\s+)?${INTENSIFIERS}(?:(?:legal|illegal|lawful|unlawful|enforceable|unenforceable|invalid|void)\b|valid\b${NOT_A_DURATION})`,
+  ),
+  // An assurance of no risk: "there are no risks", "has no hidden traps", "risk-free".
+  /\b(?:there\s+(?:are|is)|contains?|has|have|carr(?:y|ies)|poses?|with)\s+no\s+(?:[a-z-]+\s+)?(?:risks?|red\s+flags|dangers|downsides|hidden\s+(?:traps|catches))\b|\brisk[\s-]free\b/,
+  // Reassurance: "nothing to worry about", "you are fully protected".
+  /\bnothing\s+(?:here\s+)?to\s+(?:worry|be\s+(?:worried|concerned)|fear)\b|\bno\s+(?:need|reason)\s+to\s+(?:worry|be\s+(?:worried|concerned))\b|\byou\s+(?:are|will\s+be)\s+(?:fully\s+|completely\s+)?(?:protected|safe)\b/,
+  // The decision itself: "safe to sign", "you can safely sign", "I wouldn't sign", "sign it now".
+  /\b(?:safe|fine|ok|okay|good|wise|advisable)\s+to\s+sign\b|\b(?:go\s+ahead\s+and|can\s+safely|may\s+safely|should|shouldn't|i\s+would|i\s+wouldn't)\s+(?:not\s+)?sign\b|\bsign\s+(?:it|this|the\s+lease)\s+(?:immediately|now|right\s+away|without\s+worry)\b|\bworth\s+signing\b/,
+];
+
+/**
+ * Every advice phrase or verdict in a piece of generated prose, as the words that matched.
+ *
+ * The prose is folded before matching — curly apostrophes to straight, dashes to hyphens, runs of
+ * whitespace to one space — so "Don’t sign" and "risk‑free" are caught exactly as their ASCII
+ * spellings are. A guard that a typographic apostrophe walks past is not a guard.
+ */
 export function findAdvicePhrases(text: string): readonly string[] {
-  const lower = text.toLowerCase();
-  return ADVICE_PHRASES.filter((phrase) => lower.includes(phrase));
+  const folded = collapseWhitespace(foldPunctuation(text).toLowerCase());
+  const phrases = ADVICE_PHRASES.filter((phrase) => folded.includes(phrase));
+  const verdicts = VERDICT_PATTERNS.flatMap((pattern) => {
+    const match = pattern.exec(folded);
+    return match === null ? [] : [match[0]];
+  });
+  return [...phrases, ...verdicts];
+}
+
+/**
+ * What the reader is told when generated prose was withheld for crossing the boundary.
+ *
+ * A bare "some content was removed" would be the output-side equivalent of a flat refusal, and
+ * plan 05 is explicit that a refusal which leaves the reader stuck fails them as surely as
+ * over-advising does. So the note says what happened, why, and what LexMind does instead — the
+ * same redirect the request-side classifier gives, because it is the same boundary.
+ */
+export function adviceWithheldNote(count: number): string {
+  if (count <= 0) return '';
+  const subject = count === 1 ? 'One AI-written passage' : `${count} AI-written passages`;
+  const verb = count === 1 ? 'was' : 'were';
+  return [
+    `${subject} drifted into telling you what to do or what to make of the agreement, so ${verb} withheld. LexMind gives legal information, not legal advice.`,
+    'What it can do instead:',
+    ...REDIRECTS['recommend-course-of-action'].map((line) => `  - ${line}`),
+  ].join('\n');
 }

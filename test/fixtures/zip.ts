@@ -49,8 +49,7 @@ export function buildZip(inputs: readonly ZipInput[]): Uint8Array {
   let offset = 0;
 
   for (const input of inputs) {
-    const raw =
-      typeof input.content === 'string' ? encoder.encode(input.content) : input.content;
+    const raw = typeof input.content === 'string' ? encoder.encode(input.content) : input.content;
     const stored = input.store === true;
     const body = stored ? raw : new Uint8Array(deflateRawSync(raw));
     const name = encoder.encode(input.name);
@@ -132,10 +131,7 @@ function paragraphXml(paragraph: DocxParagraph): string {
     paragraph.heading === undefined
       ? ''
       : `<w:pPr><w:pStyle w:val="Heading${paragraph.heading}"/></w:pPr>`;
-  const escaped = paragraph.text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  const escaped = paragraph.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return `<w:p>${style}<w:r><w:t xml:space="preserve">${escaped}</w:t></w:r></w:p>`;
 }
 

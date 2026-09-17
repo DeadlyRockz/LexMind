@@ -1,7 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import { createReplayAdapter } from './adapters/replay.ts';
 import { readText, readUsage, resolveModel } from './adapters/gemini.ts';
+import { createReplayAdapter, REGENERATE_HINT } from './adapters/replay.ts';
 import { assertWithinPromptBudget, cacheHitRate, estimateTokens, recordUsage } from './budget.ts';
 import { classifyApiError, isModelError } from './errors.ts';
 import { selectModel } from './index.ts';
@@ -36,6 +37,15 @@ describe('Gemini-safe schema conversion', () => {
     expect(() =>
       assertGeminiSafeSchema({ type: 'object', properties: { a: { minLength: 3 } } }),
     ).toThrow(/minLength/);
+  });
+
+  it('walks arrays of subschemas and names the offending index', () => {
+    expect(() =>
+      assertGeminiSafeSchema({
+        type: 'array',
+        prefixItems: [{ type: 'string' }, { type: 'string', minLength: 1 }],
+      }),
+    ).toThrow(/Schema at \$\.prefixItems\[1\] uses "minLength"/);
   });
 
   it('accepts a schema using only supported keywords', () => {
@@ -107,9 +117,9 @@ describe('error classification', () => {
   });
 
   it('never leaks a provider message into what the reader sees', () => {
-    expect(classifyApiError({ status: 500, message: 'internal trace xyz' }).userMessage).not.toMatch(
-      /xyz/,
-    );
+    expect(
+      classifyApiError({ status: 500, message: 'internal trace xyz' }).userMessage,
+    ).not.toMatch(/xyz/);
   });
 });
 
@@ -200,7 +210,9 @@ describe('validation and repair', () => {
       await parseWithRepair(schema, 'bad', () => Promise.resolve('worse'));
       expect.unreachable();
     } catch (error) {
-      expect(isModelError(error) && error.userMessage).toMatch(/rule-based findings are unaffected/);
+      expect(isModelError(error) && error.userMessage).toMatch(
+        /rule-based findings are unaffected/,
+      );
     }
   });
 });
@@ -266,7 +278,13 @@ describe('the replay adapter', () => {
 
   it('replays a recorded response', async () => {
     const adapter = createReplayAdapter([
-      { key: requestKey(request), task: request.task, tier: 'extract', model: 'm', response: '{"n":7}' },
+      {
+        key: requestKey(request),
+        task: request.task,
+        tier: 'extract',
+        model: 'm',
+        response: '{"n":7}',
+      },
     ]);
     const result = await adapter.generateJson(request);
     expect(result.value).toEqual({ n: 7 });
@@ -280,14 +298,34 @@ describe('the replay adapter', () => {
 
   it('says "re-record" rather than "the model is broken" when the prompt has changed', async () => {
     const adapter = createReplayAdapter([
-      { key: requestKey(request), task: request.task, tier: 'extract', model: 'm', response: '{"n":1}' },
+      {
+        key: requestKey(request),
+        task: request.task,
+        tier: 'extract',
+        model: 'm',
+        response: '{"n":1}',
+      },
     ]);
     try {
       await adapter.generateJson({ ...request, task_input: 'a different task' });
       expect.unreachable();
     } catch (error) {
       expect(isModelError(error) && error.message).toMatch(/re-record/);
+      expect(isModelError(error) && error.message).toContain(REGENERATE_HINT);
     }
+  });
+
+  it('names a command that exists — the hint once pointed at a script nobody had written', () => {
+    const manifest = JSON.parse(
+      readFileSync(new URL('../../../../package.json', import.meta.url), 'utf8'),
+    ) as { readonly scripts: Readonly<Record<string, string>> };
+    const command = /`pnpm ([\w:-]+)`/.exec(REGENERATE_HINT)?.[1];
+
+    expect(command).toBe('cassettes');
+    expect(manifest.scripts[command ?? '']).toBe(
+      'node --experimental-strip-types scripts/cassettes.ts',
+    );
+    expect(REGENERATE_HINT).not.toContain('cassettes:record');
   });
 
   it('replays a recorded malformed response and its one repair', async () => {
@@ -382,6 +420,20 @@ describe('selectModel', () => {
     });
   });
 
+  it('refuses a text stream on the first pull, not when the stream is requested', async () => {
+    const selection = await selectModel({ env: {} });
+    const stream = selection.port.generateTextStream({
+      task: 't',
+      tier: 'analysis',
+      systemInstruction: 's',
+      task_input: 'i',
+    });
+    const iterator = stream[Symbol.asyncIterator]();
+    await expect(iterator.next()).rejects.toMatchObject({ code: 'NOT_CONFIGURED' });
+    // Like any finished generator, it stays finished rather than refusing a second time.
+    await expect(iterator.next()).resolves.toEqual({ done: true, value: undefined });
+  });
+
   it('explains that rule-based findings still work when there is no model', async () => {
     const selection = await selectModel({ env: {} });
     try {
@@ -402,7 +454,10 @@ describe('selectModel', () => {
 describe('token budget', () => {
   it('refuses an over-budget prompt before it is sent', () => {
     expect(() =>
-      assertWithinPromptBudget('x'.repeat(500_000), { maxPromptTokens: 1000, maxOutputTokens: 100 }),
+      assertWithinPromptBudget('x'.repeat(500_000), {
+        maxPromptTokens: 1000,
+        maxOutputTokens: 100,
+      }),
     ).toThrow(/over the 1,000 ceiling/);
   });
 
@@ -428,7 +483,17 @@ describe('token budget', () => {
       totalTokens: 12,
     };
     let meter = recordUsage(
-      { total: { promptTokens: 0, outputTokens: 0, thoughtTokens: 0, cachedTokens: 0, totalTokens: 0 }, byTask: new Map(), calls: 0 },
+      {
+        total: {
+          promptTokens: 0,
+          outputTokens: 0,
+          thoughtTokens: 0,
+          cachedTokens: 0,
+          totalTokens: 0,
+        },
+        byTask: new Map(),
+        calls: 0,
+      },
       'extract',
       usage,
     );

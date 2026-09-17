@@ -17,8 +17,7 @@
  * Stripped at ingest so an injected instruction never reaches a prompt, and stripped again at
  * render so it never reaches a screen. See `safety/unicode.ts`.
  */
-export const INVISIBLE_PATTERN =
-  /[­᠎​-‏‪-‮⁠-⁤⁦-⁯﻿]|[︀-️]|[\u{E0000}-\u{E007F}]/gu;
+export const INVISIBLE_PATTERN = /[­᠎​-‏‪-‮⁠-⁤⁦-⁯﻿]|[︀-️]|[\u{E0000}-\u{E007F}]/gu;
 
 export function stripInvisible(input: string): string {
   return input.replace(INVISIBLE_PATTERN, '');

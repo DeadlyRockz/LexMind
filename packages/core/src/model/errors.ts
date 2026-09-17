@@ -73,7 +73,10 @@ export function classifyApiError(error: unknown): ModelError {
   }
 
   if (status === 408 || status === 499) {
-    return new ModelError('TIMEOUT', `Request timed out: ${text}`, { retryable: true, cause: error });
+    return new ModelError('TIMEOUT', `Request timed out: ${text}`, {
+      retryable: true,
+      cause: error,
+    });
   }
   if (status !== undefined && status >= 500) {
     return new ModelError('UNAVAILABLE', `Provider unavailable (${status}): ${text}`, {

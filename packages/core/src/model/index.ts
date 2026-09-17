@@ -2,10 +2,12 @@ import { type Cassette, createReplayAdapter, loadCassettes } from './adapters/re
 import { ModelError } from './errors.ts';
 import type { LlmPort } from './port.ts';
 
+export { type Cassette, createReplayAdapter, loadCassettes } from './adapters/replay.ts';
 export {
   addUsage,
   assertWithinPromptBudget,
   type BudgetConfig,
+  type CallOutcome,
   cacheHitRate,
   EMPTY_METER,
   ESTIMATED_PRICE_PER_MILLION,
@@ -44,8 +46,7 @@ export {
   schemaFingerprint,
   toGeminiSchema,
 } from './schema.ts';
-export { parseWithRepair, repairInstruction, type RepairOutcome } from './validate.ts';
-export { type Cassette, createReplayAdapter, loadCassettes } from './adapters/replay.ts';
+export { parseWithRepair, type RepairOutcome, repairInstruction } from './validate.ts';
 
 /**
  * An adapter that refuses every request, cleanly.
@@ -73,7 +74,10 @@ export function createUnavailableAdapter(reason: string): LlmPort {
   return {
     label: 'unavailable (no API key)',
     generateJson: (): Promise<never> => Promise.reject(buildError(reason)),
+    // A generator with nothing to yield, on purpose: its body runs on the first pull, so the stream
+    // refuses there — where a real stream fails — rather than when it is requested.
     generateTextStream: (): AsyncIterable<string> =>
+      // biome-ignore lint/correctness/useYield: a refusing stream has nothing to yield; see above.
       (async function* refuse(): AsyncGenerator<string> {
         fail();
       })(),

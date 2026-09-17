@@ -100,7 +100,7 @@ export function isValidNric(value: string): boolean {
 
   let sum = prefix === 'T' || prefix === 'G' ? 4 : prefix === 'M' ? 3 : 0;
   for (let i = 0; i < 7; i += 1) {
-    sum += (Number.parseInt(digits[i] ?? '0', 10)) * (NRIC_WEIGHTS[i] ?? 0);
+    sum += Number.parseInt(digits[i] ?? '0', 10) * (NRIC_WEIGHTS[i] ?? 0);
   }
 
   const table = prefix === 'S' || prefix === 'T' ? NRIC_ST_CHECK : NRIC_FG_CHECK;

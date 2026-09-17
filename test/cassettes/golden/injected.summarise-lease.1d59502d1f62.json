@@ -1,0 +1,10 @@
+{
+  "provenance": "SYNTHETIC: hand-authored response written to the plan-06 plain-English target. NOT recorded from Gemini or any other model; no API key was used. Readability measured on it proves the measurement pipeline and a regression floor, not live-model quality.",
+  "scenario": "golden",
+  "lease": "injected",
+  "key": "1d59502d1f62d63142d39831d8993e9698be5a97055cd6e0bf1b37b43ba0f2bd",
+  "task": "summarise-lease",
+  "tier": "analysis",
+  "model": "synthetic-hand-authored",
+  "response": "{\"sections\":[{\"part\":\"overview\",\"text\":\"This is a short tenancy agreement. It sets the rent, a deposit, and how each side can end it.\",\"quote\":\"TENANCY AGREEMENT\"},{\"part\":\"money\",\"text\":\"You pay rent of 1,000 each month. You also pay a deposit of 5,000, which the lease says is not paid back.\",\"quote\":\"The tenant shall pay rent of 1,000 each month.\"},{\"part\":\"timing\",\"text\":\"You must give ninety days of notice. The landlord can end the tenancy at any time.\",\"quote\":\"The tenant shall give ninety days notice.\"},{\"part\":\"obligations\",\"text\":\"The document says little about duties beyond rent and the deposit. It does not mention repairs.\",\"quote\":\"The tenant shall pay a security deposit of 5,000, being five months rent, which is\"},{\"part\":\"exit\",\"text\":\"You must give ninety days of notice to leave. The landlord can end it at any time, with no reason.\",\"quote\":\"The landlord may terminate at any time without\"}]}"
+}

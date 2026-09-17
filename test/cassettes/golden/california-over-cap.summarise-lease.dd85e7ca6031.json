@@ -1,0 +1,10 @@
+{
+  "provenance": "SYNTHETIC: hand-authored response written to the plan-06 plain-English target. NOT recorded from Gemini or any other model; no API key was used. Readability measured on it proves the measurement pipeline and a regression floor, not live-model quality.",
+  "scenario": "golden",
+  "lease": "california-over-cap",
+  "key": "dd85e7ca60315f6130bdd944e2ba084b7babe668c3dc094183f54aaf942e9646",
+  "task": "summarise-lease",
+  "tier": "analysis",
+  "model": "synthetic-hand-authored",
+  "response": "{\"sections\":[{\"part\":\"overview\",\"text\":\"This is a lease for an apartment. The home is in Los Angeles County, California.\",\"quote\":\"State of California, County of Los Angeles.\"},{\"part\":\"money\",\"text\":\"You pay rent of $2,400 a month. The deposit is $7,200, and $500 of it will not be paid back.\",\"quote\":\"Tenant shall pay rent of $2,400 per month.\"},{\"part\":\"timing\",\"text\":\"Either side must give thirty days of written notice to end the lease. The landlord gives 24 hours of notice before coming in.\",\"quote\":\"Either party may terminate on thirty days written notice.\"},{\"part\":\"obligations\",\"text\":\"The landlord must keep the home fit to live in. The landlord must give notice before coming in.\",\"quote\":\"Landlord shall maintain the premises in a habitable condition.\"},{\"part\":\"exit\",\"text\":\"You or the landlord can end the lease with thirty days of written notice.\",\"quote\":\"Either party may terminate on thirty days written notice.\"}]}"
+}

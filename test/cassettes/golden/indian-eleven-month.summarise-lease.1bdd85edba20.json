@@ -1,0 +1,10 @@
+{
+  "provenance": "SYNTHETIC: hand-authored response written to the plan-06 plain-English target. NOT recorded from Gemini or any other model; no API key was used. Readability measured on it proves the measurement pipeline and a regression floor, not live-model quality.",
+  "scenario": "golden",
+  "lease": "indian-eleven-month",
+  "key": "1bdd85edba20bb48a13eead02ce6d45249fe00658c41c3934e7e344caaa7a963",
+  "task": "summarise-lease",
+  "tier": "analysis",
+  "model": "synthetic-hand-authored",
+  "response": "{\"sections\":[{\"part\":\"overview\",\"text\":\"This is a leave and licence deal for eleven months. It starts on 1 April 2026.\",\"quote\":\"The licence is granted for a period of eleven months commencing 1 April 2026.\"},{\"part\":\"money\",\"text\":\"You pay Rs. 25,000 each month, in advance, by the fifth day. You also pay a deposit of Rs. 75,000, with no interest.\",\"quote\":\"The licensee shall pay Rs. 25,000 per month as licence fee, payable in advance on\"},{\"part\":\"timing\",\"text\":\"There is a lock-in of nine months. The owner can end the deal with seven days of notice. You must give three months of notice.\",\"quote\":\"There shall be a lock-in period of nine months.\"},{\"part\":\"obligations\",\"text\":\"You pay for all repairs, big and small. You must follow the society rules. The owner can come in at any time without notice.\",\"quote\":\"The licensee shall be responsible for all repairs to the scheduled premises,\"},{\"part\":\"exit\",\"text\":\"If you leave during the lock-in, you lose the whole deposit. If you break a term, the owner can end the deal at once and lock the home.\",\"quote\":\"the licensor may terminate this agreement with\"}]}"
+}

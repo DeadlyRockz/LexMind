@@ -1,0 +1,10 @@
+{
+  "provenance": "SYNTHETIC: hand-authored response written to the plan-06 plain-English target. NOT recorded from Gemini or any other model; no API key was used. Readability measured on it proves the measurement pipeline and a regression floor, not live-model quality.",
+  "scenario": "golden",
+  "lease": "clean-fair",
+  "key": "1011f2a890f72fe58c028ee97fc6b82af2ad47b65a27bc63cca89fdec5f9efb3",
+  "task": "summarise-lease",
+  "tier": "analysis",
+  "model": "synthetic-hand-authored",
+  "response": "{\"sections\":[{\"part\":\"overview\",\"text\":\"This is a tenancy for a home at 12 Bridge Street. It runs for twelve months from 1 April 2026.\",\"quote\":\"The tenancy runs for twelve months from 1 April 2026.\"},{\"part\":\"money\",\"text\":\"You pay rent of 1,200 each month. You pay it in advance, on the first day of the month. You also pay a deposit of one month of rent.\",\"quote\":\"The tenant shall pay rent of 1,200 each month, in advance, on the first day of the month.\"},{\"part\":\"timing\",\"text\":\"Either side must give one month of written notice to end the tenancy. The landlord must give 24 hours of notice before coming in, unless there is an emergency.\",\"quote\":\"Either party may end this tenancy by giving the other one month written notice.\"},{\"part\":\"obligations\",\"text\":\"The landlord keeps the building, the outside, and the water, gas, power and heat in repair. You keep the inside in good order and report problems quickly.\",\"quote\":\"The landlord shall keep in repair the structure and exterior of the property and the installations\"},{\"part\":\"exit\",\"text\":\"You or the landlord can end the tenancy with one month of written notice. The landlord pays back the deposit within fourteen days after it ends.\",\"quote\":\"deposit within fourteen days after the tenancy ends\"}]}"
+}

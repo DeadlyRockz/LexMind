@@ -30,27 +30,35 @@ import { type Block, IngestError, type NormalizedDocument } from './types.ts';
 
 const BLOCK_TAG = /<(h[1-6]|p|li|td|th)\b[^>]*>([\s\S]*?)<\/\1>/gi;
 
-const ENTITIES: Readonly<Record<string, string>> = {
-  amp: '&',
-  lt: '<',
-  gt: '>',
-  quot: '"',
-  apos: "'",
-  nbsp: ' ',
-};
+/**
+ * A `Map`, so a name from the document can never find an inherited key: as a plain object,
+ * `&constructor;` decoded to Object.prototype's function and wrote its source into the text.
+ */
+const ENTITIES: ReadonlyMap<string, string> = new Map([
+  ['amp', '&'],
+  ['lt', '<'],
+  ['gt', '>'],
+  ['quot', '"'],
+  ['apos', "'"],
+  ['nbsp', ' '],
+]);
+
+/**
+ * The character a numeric reference names, or the reference left as written when it names none.
+ *
+ * `String.fromCodePoint` throws a `RangeError` above U+10FFFF, so `&#x110000;` would otherwise escape
+ * as a raw exception rather than a typed ingest failure or harmless text.
+ */
+function codePointOr(code: number, literal: string): string {
+  return Number.isInteger(code) && code <= 0x10ffff ? String.fromCodePoint(code) : literal;
+}
 
 function decodeEntities(input: string): string {
   return input.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, body: string) => {
     const lower = body.toLowerCase();
-    if (lower.startsWith('#x')) {
-      const code = Number.parseInt(lower.slice(2), 16);
-      return Number.isFinite(code) ? String.fromCodePoint(code) : match;
-    }
-    if (lower.startsWith('#')) {
-      const code = Number.parseInt(lower.slice(1), 10);
-      return Number.isFinite(code) ? String.fromCodePoint(code) : match;
-    }
-    return ENTITIES[lower] ?? match;
+    if (lower.startsWith('#x')) return codePointOr(Number.parseInt(lower.slice(2), 16), match);
+    if (lower.startsWith('#')) return codePointOr(Number.parseInt(lower.slice(1), 10), match);
+    return ENTITIES.get(lower) ?? match;
   });
 }
 

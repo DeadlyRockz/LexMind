@@ -3,10 +3,10 @@ import { ingestPastedText } from '../ingest/index.ts';
 import { normalizeForMatch } from '../util/text.ts';
 import { clauseReference, segmentClauses } from './clauses.ts';
 import { headingTitle, looksLikeHeading, parseNumbering } from './headings.ts';
+import { segment } from './index.ts';
 import { buildRetrievalIndex, expandQuery, search, tokenize } from './lexical.ts';
 import { buildMatchIndex, locateQuote, MIN_QUOTE_CHARS, pinQuote } from './locate.ts';
 import { buildOutline, flattenOutline, outlineDepth } from './outline.ts';
-import { segment } from './index.ts';
 
 describe('parseNumbering', () => {
   it('reads each numbering scheme a lease actually uses', () => {
@@ -198,7 +198,9 @@ describe('locateQuote', () => {
     expect(hits[0]?.matchKind).toBe('normalized');
     // The offsets must still slice out the real text, folded-equal to the quote.
     const sliced = text.slice(hits[0]?.charStart ?? 0, hits[0]?.charEnd ?? 0);
-    expect(normalizeForMatch(sliced)).toBe(normalizeForMatch('THIRTY (30) DAYS NOTICE. the landlord'));
+    expect(normalizeForMatch(sliced)).toBe(
+      normalizeForMatch('THIRTY (30) DAYS NOTICE. the landlord'),
+    );
   });
 
   it('never invents an offset for a quote the document does not contain', () => {
@@ -279,9 +281,11 @@ No pets are permitted in the premises.
   it('bridges a tenant phrasing that shares no words with the clause', () => {
     // "can I leave early" and "lock-in period" have zero term overlap, so BM25 alone scores this
     // at nothing however well tuned. The expansion table is what closes the gap.
-    expect(search(index, 'can I leave early?', 5).map((h) => h.clause.text).join(' ')).toMatch(
-      /lock-in/i,
-    );
+    expect(
+      search(index, 'can I leave early?', 5)
+        .map((h) => h.clause.text)
+        .join(' '),
+    ).toMatch(/lock-in/i);
   });
 
   it('still scores the reader own words, so expansion never replaces the question', () => {

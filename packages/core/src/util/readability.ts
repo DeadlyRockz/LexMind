@@ -69,8 +69,20 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-/** Above this, a lease clause is flagged as obscuring its own meaning. */
+/**
+ * Above this, a *lease clause* is flagged as obscuring its own meaning (`unintelligible-drafting`).
+ *
+ * Deliberately far above the plain-language target below, because the two measure different
+ * things. This one judges the landlord's drafting, and legal drafting routinely sits in the low-to-
+ * mid teens — consumer contracts average around grade 14.7 — so a threshold near 8 would flag
+ * nearly every clause of every lease and the finding would mean nothing. Grade 18 marks drafting
+ * that is unusually hard even by the standard of contracts.
+ */
 export const OBSCURE_GRADE_LEVEL = 18;
 
-/** The target LexMind holds its own generated prose to. */
-export const PLAIN_LANGUAGE_GRADE_LEVEL = 9;
+/**
+ * The plain-English target LexMind holds its *own* generated prose to: Flesch-Kincaid grade 8 or
+ * below (plan 06). The prompts ask for an eighth-grade level, and the cassette end-to-end gate
+ * asserts every explanation and summary paragraph shown to the reader meets this figure.
+ */
+export const PLAIN_LANGUAGE_GRADE_LEVEL = 8;

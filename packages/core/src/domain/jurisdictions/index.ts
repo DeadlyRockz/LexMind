@@ -58,9 +58,18 @@ const COUNTRY_MARKERS: Readonly<Record<Country, readonly string[]>> = {
   ],
 };
 
-const US_STATE_MARKERS: readonly { readonly id: JurisdictionId; readonly markers: readonly string[] }[] = [
-  { id: 'US-CA', markers: ['california', 'civil code', 'los angeles', 'san francisco', 'san diego'] },
-  { id: 'US-NY', markers: ['new york', 'general obligations law', 'brooklyn', 'manhattan', 'queens'] },
+const US_STATE_MARKERS: readonly {
+  readonly id: JurisdictionId;
+  readonly markers: readonly string[];
+}[] = [
+  {
+    id: 'US-CA',
+    markers: ['california', 'civil code', 'los angeles', 'san francisco', 'san diego'],
+  },
+  {
+    id: 'US-NY',
+    markers: ['new york', 'general obligations law', 'brooklyn', 'manhattan', 'queens'],
+  },
 ];
 
 /** Country resolution needs this much evidence before it claims anything. */

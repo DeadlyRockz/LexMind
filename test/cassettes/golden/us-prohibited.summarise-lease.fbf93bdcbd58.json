@@ -1,0 +1,10 @@
+{
+  "provenance": "SYNTHETIC: hand-authored response written to the plan-06 plain-English target. NOT recorded from Gemini or any other model; no API key was used. Readability measured on it proves the measurement pipeline and a regression floor, not live-model quality.",
+  "scenario": "golden",
+  "lease": "us-prohibited",
+  "key": "fbf93bdcbd580c7053c83f3666ad831f0809359e45b81faa670fd8fc35e3b6e6",
+  "task": "summarise-lease",
+  "tier": "analysis",
+  "model": "synthetic-hand-authored",
+  "response": "{\"sections\":[{\"part\":\"overview\",\"text\":\"This is a lease for an apartment in Travis County, Texas. It runs for twelve months.\",\"quote\":\"The landlord leases the apartment unit to the tenant for twelve months.\"},{\"part\":\"money\",\"text\":\"You pay rent of $1,800 a month and a deposit of $3,600. In any legal case, you also pay the lawyer fees of the landlord, win or lose.\",\"quote\":\"Tenant shall pay rent of $1,800 per month.\"},{\"part\":\"timing\",\"text\":\"The landlord needs to give only three days of notice to end the lease. You must give sixty days of notice.\",\"quote\":\"Tenant must give sixty days written notice.\"},{\"part\":\"obligations\",\"text\":\"You take the home as it is. The landlord can come in at any time without notice. You cover the landlord for claims about the home.\",\"quote\":\"Tenant accepts the premises in its present condition, as-is,\"},{\"part\":\"exit\",\"text\":\"The landlord can end the lease on three days of notice. You must give sixty days of written notice to leave.\",\"quote\":\"Landlord may terminate on three days notice.\"}]}"
+}

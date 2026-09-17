@@ -12,6 +12,60 @@
  * which is the only defence against a golden set that flatters the analyser that grades it.
  */
 
+import type { ClauseTypeId } from '../../packages/core/src/domain/clause-types.ts';
+
+/**
+ * The clause types one clause is expected to carry — the ground truth for clause-typing precision
+ * and recall (Phase 06 acceptance, rendered into `reports/scorecard.md` by Phase 11).
+ *
+ * ## How the labels were written
+ *
+ * By reading each clause against the taxonomy's own definitions in `domain/clause-types.ts` —
+ * **never** by running the detector and copying what it said, which would have the scorecard grade
+ * the detector against itself. Every clause the segmenter produces is labelled, including the ones
+ * that should get no type at all, because a type pinned on a bare title is a false positive.
+ *
+ *  1. A type is labelled when the clause *sets a term* of that type, not when it mentions the
+ *     subject in passing: "less any amount properly owed for unpaid rent" is a deduction term, not
+ *     a rent term; a deposit "being three months licence fee" is not a rent clause.
+ *  2. A clause that genuinely covers several subjects carries all of them: "RENT AND DEPOSIT" is
+ *     `rent` + `security-deposit`; "either party may end this tenancy by giving one month notice" is
+ *     `notice-periods` + `termination-landlord` + `termination-tenant`.
+ *  3. The caption is evidence, the body decides. "REPAIRS" over "Landlord shall maintain" is
+ *     `landlord-repairs`; "DEPOSIT" over a non-refundable *administration fee* adds `taxes-and-fees`,
+ *     not `deposit-deductions`, because it is not the deposit that is non-refundable.
+ *  4. A preamble saying how, where or under which law the document is made is `recitals` (not
+ *     `dispute-resolution`); stamp paper and the sub-registrar add `registration`. A bare title that
+ *     sets nothing is untyped, and so is injected text that sets no term.
+ *  5. Contracting out of the law — waiving a warranty, a jury trial, statutory remedies, confessing
+ *     judgment, or repairing "notwithstanding anything contained in any law" — is `waiver-of-rights`
+ *     wherever it appears, alongside the clause's main subject.
+ *  6. `notice-periods` is notice to *end* the tenancy, including the notice mechanism when no
+ *     period is stated ("by serving a section 21 notice"); notice before entry is only
+ *     `inspection-entry`.
+ *  7. A start date stated in a term clause ("for twelve months from 1 April 2026") is also
+ *     `commencement`; a letting "as a private home" also states the `permitted-use`.
+ *  8. Forfeiting the deposit is `deposit-deductions`. Forfeiture for leaving inside a lock-in is
+ *     `lock-in` + `deposit-deductions` and not `termination-tenant` (the taxonomy's own exclusion);
+ *     `default-remedies` is kept for what the landlord may do on a breach — re-entry, lock-out,
+ *     disconnection.
+ */
+export interface ClauseTypeLabel {
+  /** The id `segment()` gives the clause (`c1`, `c2`, …). */
+  readonly clauseId: string;
+  /**
+   * How the clause's text begins. Checked against the segmenter's output, so a segmentation change
+   * that shifts ids fails loudly instead of silently re-pointing every label at the wrong clause.
+   */
+  readonly opens: string;
+  /** Expected types, unordered. Empty when the clause sets no term of any type. */
+  readonly types: readonly ClauseTypeId[];
+}
+
+function clause(clauseId: string, opens: string, ...types: ClauseTypeId[]): ClauseTypeLabel {
+  return { clauseId, opens, types };
+}
+
 export interface LeaseAnnotation {
   readonly id: string;
   readonly title: string;
@@ -22,6 +76,8 @@ export interface LeaseAnnotation {
   readonly expectedPatterns: readonly string[];
   /** Risk pattern ids that must NOT fire. A false positive is as much a failure as a miss. */
   readonly forbiddenPatterns: readonly string[];
+  /** Expected clause types for every clause the segmenter produces, in document order. */
+  readonly clauseTypes: readonly ClauseTypeLabel[];
   /** Seeded question / expected answer anchors, for the Q&A evaluation. */
   readonly questions?: readonly {
     readonly question: string;
@@ -369,6 +425,27 @@ export const GOLDEN_LEASES: readonly LeaseAnnotation[] = [
       { question: 'How much is the deposit?', expectContains: 'one month' },
       { question: 'Does the lease allow pets?', expectAbstain: true },
     ],
+    clauseTypes: [
+      clause('c1', 'RESIDENTIAL TENANCY AGREEMENT'),
+      clause('c2', '1. PARTIES', 'parties'),
+      clause('c3', '2. THE PROPERTY', 'premises', 'permitted-use'),
+      clause('c4', '3. TERM', 'term-duration', 'commencement'),
+      clause('c5', '4. RENT', 'rent'),
+      clause('c6', '5. SECURITY DEPOSIT', 'security-deposit', 'deposit-deductions'),
+      clause('c7', '6. LANDLORD REPAIR DUTIES', 'landlord-repairs'),
+      clause('c8', '7. TENANT REPAIR DUTIES', 'tenant-repairs'),
+      clause('c9', '8. LANDLORD ENTRY AND INSPECTION', 'inspection-entry'),
+      clause(
+        'c10',
+        '9. NOTICE PERIODS',
+        'notice-periods',
+        'termination-landlord',
+        'termination-tenant',
+      ),
+      clause('c11', '10. LATE PAYMENT', 'late-fee'),
+      clause('c12', '11. QUIET ENJOYMENT', 'quiet-enjoyment'),
+      clause('c13', '12. DISPUTES', 'dispute-resolution'),
+    ],
   },
   {
     id: 'indian-eleven-month',
@@ -400,6 +477,29 @@ export const GOLDEN_LEASES: readonly LeaseAnnotation[] = [
       { question: 'Who pays for structural repairs?', expectContains: 'licensee' },
       { question: 'Should I sign this agreement?', expectAbstain: true },
     ],
+    clauseTypes: [
+      clause('c1', 'LEAVE AND LICENCE AGREEMENT', 'recitals', 'registration'),
+      clause('c2', '1. TERM.', 'term-duration', 'commencement'),
+      clause('c3', '2. LICENCE FEE.', 'rent'),
+      clause('c4', '3. SECURITY DEPOSIT.', 'security-deposit'),
+      clause('c5', '4. LOCK-IN PERIOD.', 'lock-in', 'deposit-deductions'),
+      clause('c6', '5. MAINTENANCE.', 'tenant-repairs', 'waiver-of-rights'),
+      clause('c7', '6. ENTRY.', 'inspection-entry'),
+      clause(
+        'c8',
+        '7. TERMINATION.',
+        'termination-landlord',
+        'termination-tenant',
+        'notice-periods',
+      ),
+      clause('c9', '8. ESCALATION.', 'rent-escalation'),
+      clause('c10', '9. LATE PAYMENT.', 'late-fee'),
+      clause('c11', '10. INDEMNITY.', 'indemnity-exculpation'),
+      clause('c12', '11. LEGAL COSTS.', 'dispute-resolution'),
+      clause('c13', '12. OCCUPANCY.', 'occupancy-limits'),
+      clause('c14', '13. DEFAULT.', 'default-remedies', 'termination-landlord'),
+      clause('c15', '14. HOUSE RULES.', 'rules-and-regulations'),
+    ],
   },
   {
     id: 'us-prohibited',
@@ -420,6 +520,25 @@ export const GOLDEN_LEASES: readonly LeaseAnnotation[] = [
       'deposit-excessive',
     ],
     forbiddenPatterns: ['ast-section-21-mischaracterised', 'occupancy-discrimination'],
+    clauseTypes: [
+      clause('c1', 'RESIDENTIAL LEASE AGREEMENT', 'recitals'),
+      clause('c2', 'ARTICLE 1 - PREMISES AND TERM', 'premises', 'term-duration'),
+      clause('c3', 'ARTICLE 2 - RENT AND DEPOSIT', 'rent', 'security-deposit'),
+      clause('c4', 'ARTICLE 3 - WAIVER OF RIGHTS', 'waiver-of-rights'),
+      clause('c5', 'ARTICLE 4 - CONFESSION OF JUDGMENT', 'waiver-of-rights'),
+      clause('c6', 'ARTICLE 5 - ATTORNEY FEES', 'dispute-resolution'),
+      clause('c7', 'ARTICLE 6 - LIMITATION OF LIABILITY', 'indemnity-exculpation'),
+      clause('c8', 'ARTICLE 7 - CONDITION OF PREMISES', 'habitability', 'waiver-of-rights'),
+      clause('c9', 'ARTICLE 8 - DISPUTE RESOLUTION', 'dispute-resolution', 'waiver-of-rights'),
+      clause('c10', 'ARTICLE 9 - ENTRY', 'inspection-entry'),
+      clause(
+        'c11',
+        'ARTICLE 10 - NOTICE',
+        'notice-periods',
+        'termination-landlord',
+        'termination-tenant',
+      ),
+    ],
   },
   {
     id: 'california-over-cap',
@@ -428,6 +547,14 @@ export const GOLDEN_LEASES: readonly LeaseAnnotation[] = [
     expectedJurisdiction: 'US-CA',
     expectedPatterns: ['deposit-excessive', 'deposit-non-refundable'],
     forbiddenPatterns: ['notice-asymmetry', 'entry-without-notice', 'waiver-of-legal-rights'],
+    clauseTypes: [
+      clause('c1', 'RESIDENTIAL LEASE', 'recitals'),
+      clause('c2', '1. RENT.', 'rent'),
+      clause('c3', '2. SECURITY DEPOSIT.', 'security-deposit', 'deposit-deductions'),
+      clause('c4', '3. REPAIRS.', 'landlord-repairs', 'habitability'),
+      clause('c5', '4. NOTICE.', 'notice-periods', 'termination-landlord', 'termination-tenant'),
+      clause('c6', '5. ENTRY.', 'inspection-entry'),
+    ],
   },
   {
     id: 'england-outdated',
@@ -442,6 +569,15 @@ export const GOLDEN_LEASES: readonly LeaseAnnotation[] = [
       'arbitration-mandatory',
     ],
     forbiddenPatterns: ['confession-of-judgment', 'occupancy-discrimination'],
+    clauseTypes: [
+      clause('c1', 'ASSURED SHORTHOLD TENANCY AGREEMENT', 'recitals'),
+      clause('c2', '1. RENT', 'rent'),
+      clause('c3', '2. DEPOSIT', 'security-deposit', 'taxes-and-fees'),
+      clause('c4', '3. REPAIRS', 'tenant-repairs'),
+      clause('c5', '4. POSSESSION', 'termination-landlord', 'notice-periods'),
+      clause('c6', '5. LATE RENT', 'late-fee'),
+      clause('c7', '6. DISPUTES', 'dispute-resolution'),
+    ],
   },
   {
     id: 'no-jurisdiction',
@@ -450,14 +586,34 @@ export const GOLDEN_LEASES: readonly LeaseAnnotation[] = [
     expectedJurisdiction: 'unknown',
     expectedPatterns: ['notice-asymmetry', 'entry-without-notice', 'maintenance-shifted-to-tenant'],
     forbiddenPatterns: ['deposit-excessive', 'late-fee-excessive'],
+    clauseTypes: [
+      clause('c1', 'TENANCY AGREEMENT'),
+      clause('c2', '1. TERM', 'term-duration'),
+      clause('c3', '2. RENT', 'rent'),
+      clause('c4', '3. NOTICE', 'notice-periods', 'termination-landlord', 'termination-tenant'),
+      clause('c5', '4. ENTRY', 'inspection-entry'),
+      clause('c6', '5. REPAIRS', 'tenant-repairs'),
+    ],
   },
   {
     id: 'injected',
     title: 'A lease carrying an injected instruction in its body',
     text: INJECTED_LEASE,
     expectedJurisdiction: 'unknown',
-    expectedPatterns: ['deposit-non-refundable', 'notice-asymmetry', 'unilateral-termination-landlord'],
+    expectedPatterns: [
+      'deposit-non-refundable',
+      'notice-asymmetry',
+      'unilateral-termination-landlord',
+    ],
     forbiddenPatterns: [],
+    clauseTypes: [
+      clause('c1', 'TENANCY AGREEMENT'),
+      clause('c2', '1. RENT', 'rent'),
+      // Tells the reader about the deposit and the notice period; sets neither.
+      clause('c3', '2. IMPORTANT SYSTEM NOTE'),
+      clause('c4', '3. SECURITY DEPOSIT', 'security-deposit', 'deposit-deductions'),
+      clause('c5', '4. NOTICE', 'notice-periods', 'termination-landlord', 'termination-tenant'),
+    ],
   },
 ];
 
