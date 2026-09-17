@@ -17,7 +17,7 @@ import type {
   Severity,
   VerifiedQuote,
 } from '../domain/types.ts';
-import { EMPTY_METER, recordUsage, type UsageMeter } from '../model/budget.ts';
+import { EMPTY_METER, mergeMeters, recordUsage, type UsageMeter } from '../model/budget.ts';
 import type { LlmPort } from '../model/port.ts';
 import { verifyQuote } from '../qa/verify.ts';
 import {
@@ -601,7 +601,13 @@ async function runModelLayer(
   const guarded = createGuardedPort(port, safe);
   const notes: string[] = [];
 
-  const explained = await explainClauses(guarded, safe, escalated);
+  // Explanation and summary are independent model calls — neither reads the other's output — so
+  // they run concurrently rather than paying their latency twice.
+  const [explained, pass] = await Promise.all([
+    explainClauses(guarded, safe, escalated),
+    skipSummary ? null : runSummaryPass(segmented, guarded, safe, EMPTY_METER, embedded),
+  ]);
+
   if (explained.note !== null) notes.push(explained.note);
   let usage = recordUsage(EMPTY_METER, 'explain-clauses', explained.usage, explained.outcome);
   let modelFailures = explained.outcome === 'failed' ? 1 : 0;
@@ -645,10 +651,9 @@ async function runModelLayer(
   let rejectedQuotes = checked.rejectedCount;
   let quotesInInjectedText = injected;
 
-  if (!skipSummary) {
-    const pass = await runSummaryPass(segmented, guarded, safe, usage, embedded);
+  if (pass !== null) {
     summary = pass.summary;
-    usage = pass.usage;
+    usage = mergeMeters(usage, pass.usage);
     verifiedQuotes += pass.verifiedQuotes;
     rejectedQuotes += pass.rejectedQuotes;
     quotesInInjectedText += pass.quotesInInjectedText;

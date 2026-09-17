@@ -126,6 +126,18 @@ export function recordUsage(
   return { total: addUsage(meter.total, usage), byTask, calls: meter.calls + 1 };
 }
 
+/**
+ * Combine two meters recorded independently — the explain-clauses and summarise-lease calls run
+ * concurrently, each accumulating from `EMPTY_METER`, and their bookkeeping is merged afterward.
+ */
+export function mergeMeters(a: UsageMeter, b: UsageMeter): UsageMeter {
+  const byTask = new Map(a.byTask);
+  for (const [task, usage] of b.byTask) {
+    byTask.set(task, addUsage(byTask.get(task) ?? EMPTY_METER.total, usage));
+  }
+  return { total: addUsage(a.total, b.total), byTask, calls: a.calls + b.calls };
+}
+
 /** The share of prompt tokens served from the provider's cache. Measured, never assumed. */
 export function cacheHitRate(usage: Usage): number {
   if (usage.promptTokens === 0) return 0;

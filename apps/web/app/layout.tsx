@@ -56,7 +56,7 @@ export default function RootLayout({ children }: { readonly children: ReactNode 
             color: LinkText;
           }
           .skip-link:focus-visible { left: 0; z-index: 100; }
-          main:focus { outline: none; }
+          main:focus-visible { outline: 3px solid Highlight; outline-offset: 2px; }
         `}</style>
         <a className="skip-link" href="#main">
           Skip to main content

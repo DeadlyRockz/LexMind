@@ -8,18 +8,34 @@
 
 import {
   analyse,
+  formatBytes,
   ingestBytes,
   ingestPastedText,
   isIngestError,
   isModelError,
   type JurisdictionId,
+  LIMITS,
   segment,
   selectModel,
 } from '@lexmind/core';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request): Promise<Response> {
-  const form = await request.formData();
+  let form: FormData;
+  try {
+    form = await request.formData();
+  } catch {
+    // Thrown by the platform, not by anything below, when the request has no body or a
+    // Content-Type other than multipart/form-data or application/x-www-form-urlencoded — a
+    // malformed request, not a server fault, so it is a 400 rather than an unhandled 500.
+    return NextResponse.json(
+      { error: 'The request could not be read as form data.' },
+      {
+        status: 400,
+      },
+    );
+  }
+
   const file = form.get('file');
   const text = form.get('text');
   const jurisdictionField = form.get('jurisdiction');
@@ -31,6 +47,19 @@ export async function POST(request: Request): Promise<Response> {
   let document: Awaited<ReturnType<typeof ingestBytes>>;
   try {
     if (file instanceof File && file.size > 0) {
+      // `request.formData()` above has already buffered the upload once; `ingestBytes` enforces
+      // this same limit but only after a second copy via `arrayBuffer()` and a parse attempt.
+      // Checking `file.size` first skips that second copy and the parse, on a value the platform
+      // already gave us for free — it does not bound the first buffer, which would need a
+      // request-level body-size limit Next.js route handlers do not provide out of the box.
+      if (file.size > LIMITS.maxFileBytes) {
+        return NextResponse.json(
+          {
+            error: `The file is ${formatBytes(file.size)}. The limit is ${formatBytes(LIMITS.maxFileBytes)}.`,
+          },
+          { status: 413 },
+        );
+      }
       document = await ingestBytes(new Uint8Array(await file.arrayBuffer()));
     } else if (typeof text === 'string' && text.trim().length > 0) {
       document = ingestPastedText(text);
@@ -64,7 +93,11 @@ export async function POST(request: Request): Promise<Response> {
       },
     });
   } catch (error) {
-    const message = isModelError(error) ? error.message : 'Analysis failed.';
+    // `.userMessage`, never `.message`: a `ModelError`'s `message` can carry the raw vendor error
+    // text (`classifyApiError` puts the provider's own response string there), and `userMessage`
+    // is precisely the field that exists to keep that out of what a reader — or, here, an HTTP
+    // response body — ever sees.
+    const message = isModelError(error) ? error.userMessage : 'Analysis failed.';
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }
