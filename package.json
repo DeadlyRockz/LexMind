@@ -25,7 +25,7 @@
     "verify": "pnpm typecheck && pnpm lint && pnpm coverage && pnpm check:size"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.13",
+    "@biomejs/biome": "2.5.14",
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "14.6.7",
     "@types/jest-axe": "3.5.9",
@@ -34,7 +34,7 @@
     "@vitest/coverage-v8": "5.0.1",
     "jest-axe": "11.0.0",
     "jsdom": "30.0.1",
-    "typescript": "5.9.3",
+    "typescript": "7.0.2",
     "vitest": "5.0.1"
   }
 }
