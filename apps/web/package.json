@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@lexmind/core": "workspace:*",
-    "next": "16.3.5",
+    "next": "16.3.6",
     "react": "19.3.0",
     "react-aria-components": "1.21.1",
     "react-dom": "19.3.0"
