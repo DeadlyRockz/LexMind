@@ -12,7 +12,7 @@
     "lexmind": "./src/cli.ts"
   },
   "dependencies": {
-    "@google/genai": "2.22.0",
+    "@google/genai": "2.24.0",
     "mammoth": "1.12.3",
     "unpdf": "1.8.1",
     "zod": "4.6.5"
