@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@google/genai": "2.22.0",
-    "mammoth": "1.12.3",
+    "mammoth": "1.13.0",
     "unpdf": "1.8.1",
     "zod": "4.6.5"
   }
